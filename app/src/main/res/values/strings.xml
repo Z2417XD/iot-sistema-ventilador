@@ -1,0 +1,80 @@
+<resources>
+    <string name="app_name">My Application</string>
+
+    <!-- Valores genéricos -->
+    <string name="sin_valor">--</string>
+    <string name="sin_datos">Sin datos</string>
+    <string name="sin_lectura">Sin lectura</string>
+    <string name="activado">Activado</string>
+    <string name="desactivado">Desactivado</string>
+
+    <!-- Pantalla principal -->
+    <string name="titulo_principal">Control de clima</string>
+    <string name="hint_ip">IP de la placa</string>
+    <string name="conectar">Conectar</string>
+    <string name="modo_demo">Modo demo</string>
+    <string name="conexion_escribe_ip">Escribe la IP de la placa o prueba el modo demo</string>
+    <string name="conexion_demo">Modo demo: datos simulados</string>
+    <string name="conexion_conectando">Conectando con %1$s…</string>
+    <string name="conexion_conectado">Conectado a %1$s</string>
+    <string name="conexion_sin">Sin conexión</string>
+    <string name="error_conexion">No se pudo conectar con la placa (%1$s)</string>
+
+    <string name="temperatura_ambiental">Temperatura ambiental</string>
+    <string name="temperatura_valor">%1$.1f°</string>
+    <string name="humedad_valor">Humedad %1$.0f %%</string>
+
+    <string name="nivel_sin_datos">Sin datos</string>
+    <string name="nivel_fria">Fría</string>
+    <string name="nivel_fresca">Fresca</string>
+    <string name="nivel_agradable">Agradable</string>
+    <string name="nivel_calurosa">Calurosa</string>
+    <string name="nivel_muy_caliente">Muy caliente</string>
+
+    <string name="detalle_conectate">Conéctate a la placa para ver la temperatura</string>
+    <string name="detalle_sin_conexion">Sin conexión con la placa</string>
+    <string name="detalle_sensor">Revisa la conexión del sensor DHT11</string>
+    <string name="detalle_confort">Dentro de la zona de confort (%1$.0f a %2$.0f °C)</string>
+    <string name="detalle_sobre">%1$.1f °C sobre la zona de confort</string>
+    <string name="detalle_bajo">%1$.1f °C bajo la zona de confort</string>
+
+    <string name="objetivo_titulo">Temperatura objetivo</string>
+    <string name="objetivo_valor">%1$.0f °C</string>
+    <string name="bajar">−</string>
+    <string name="subir">+</string>
+    <string name="desc_bajar">Bajar la temperatura objetivo</string>
+    <string name="desc_subir">Subir la temperatura objetivo</string>
+    <string name="escala_min">10 °C (frío)</string>
+    <string name="escala_max">(caliente) 40 °C</string>
+
+    <string name="ventilador">Ventilador</string>
+    <string name="ventilador_encendido">Encendido</string>
+    <string name="ventilador_apagado">Apagado</string>
+    <string name="desc_switch_ventilador">Encender o apagar el ventilador</string>
+    <string name="modo_auto">Modo automático</string>
+    <string name="modo_auto_ayuda">La placa prende el ventilador cuando se pasa del objetivo. Si lo manejas a mano, se desactiva.</string>
+    <string name="desc_switch_auto">Activar o desactivar el modo automático</string>
+    <string name="ver_historial">Ver historial y parámetros</string>
+
+    <!-- Historial -->
+    <string name="volver">← Volver</string>
+    <string name="historial_titulo">Parámetros en tiempo real</string>
+    <string name="historial_cargando">Cargando datos…</string>
+    <string name="historial_sin_datos">Sin datos de la placa.</string>
+    <string name="historial_sin_conexion">Sin conexión con la placa.</string>
+    <string name="historial_grados">%1$.1f °C</string>
+    <string name="historial_humedad">%1$.0f %%</string>
+    <string name="historial_parametros">Temperatura ambiental: %1$s\nHumedad: %2$s\nTemperatura objetivo: %3$s\nVentilador: %4$s\nModo automático: %5$s\nZona: %6$s</string>
+    <string name="zona_bajo">bajo la zona de confort</string>
+    <string name="zona_confort">dentro de la zona de confort</string>
+    <string name="zona_sobre">sobre la zona de confort</string>
+    <string name="ultimos_5_minutos">Últimos 5 minutos</string>
+    <string name="leyenda_grafico">Franja clara: zona de confort. Línea punteada: temperatura objetivo.</string>
+    <string name="esperando_lecturas">Esperando lecturas…</string>
+
+    <!-- Notificaciones -->
+    <string name="canal_alertas">Alertas de temperatura</string>
+    <string name="alerta_sobre_titulo">La habitación se pasó de la zona de confort</string>
+    <string name="alerta_bajo_titulo">La habitación bajó de la zona de confort</string>
+    <string name="alerta_texto">Está a %1$.1f °C. La zona de confort va de %2$.0f a %3$.0f °C.</string>
+</resources>

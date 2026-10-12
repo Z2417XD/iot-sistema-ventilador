@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- El fondo (degradado de color) lo pone y lo anima MainActivity según el
+     estado de la habitación. Todo el contenido va en blanco sobre ese fondo.
+     fitsSystemWindows deja el contenido fuera de la barra de estado y de la
+     barra de navegación, mientras el fondo sí se dibuja detrás de ellas. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:fitsSystemWindows="true"
+    tools:background="#1565C0"
+    tools:context=".MainActivity">
+
+    <!-- AnchoContenido: en teléfonos ocupa todo el ancho; en tablets queda
+         centrado con un ancho máximo (ver values-w600dp/estilos.xml). -->
+    <LinearLayout
+        android:id="@+id/contenido"
+        style="@style/AnchoContenido"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/titulo_principal"
+            android:textAppearance="?attr/textAppearanceHeadlineMedium"
+            android:textColor="@color/blanco" />
+
+        <!-- ============ Conexión ============ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="@string/hint_ip">
+
+                <!-- maxWidth: en tablets el campo no se estira de más -->
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etIp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionDone"
+                    android:importantForAutofill="no"
+                    android:inputType="textUri"
+                    android:maxWidth="488dp"
+                    android:maxLines="1"
+                    android:textColor="@color/blanco" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/btnConectar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="@string/conectar" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvConexion"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/conexion_escribe_ip"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="@color/blanco" />
+
+            <Button
+                android:id="@+id/btnDemo"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/modo_demo" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/aviso"
+            android:visibility="gone" />
+
+        <!-- ============ Estado de la habitación ============ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="@string/temperatura_ambiental"
+                android:textAppearance="?attr/textAppearanceLabelLarge"
+                android:textColor="@color/blanco_suave" />
+
+            <!-- La franja clara del indicador es la zona de confort (17 a 25 °C) -->
+            <FrameLayout
+                android:layout_width="260dp"
+                android:layout_height="260dp">
+
+                <com.example.myapplication.TermometroView
+                    android:id="@+id/termometro"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <!-- "tnum" = números de ancho fijo, para que no se muevan al contar -->
+                    <TextView
+                        android:id="@+id/tvTemperatura"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFeatureSettings="tnum"
+                        android:text="@string/sin_valor"
+                        android:textColor="@color/blanco"
+                        android:textSize="52sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvEstado"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/nivel_sin_datos"
+                        android:textColor="@color/blanco"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/tvDetalle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/detalle_conectate"
+                android:textColor="@color/blanco"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/tvHumedad"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/blanco_suave"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- ============ Temperatura objetivo: subir y bajar ============ -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/TarjetaVidrio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- labelFor: el lector de pantalla anuncia este título al llegar al slider -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:labelFor="@id/slObjetivo"
+                    android:text="@string/objetivo_titulo"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:textColor="@color/blanco_suave" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnBajar"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/desc_bajar"
+                        android:text="@string/bajar"
+                        android:textSize="24sp" />
+
+                    <TextView
+                        android:id="@+id/tvObjetivo"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="24dp"
+                        android:layout_marginEnd="24dp"
+                        android:fontFeatureSettings="tnum"
+                        android:text="@string/sin_valor"
+                        android:textColor="@color/blanco"
+                        android:textSize="34sp"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/btnSubir"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/desc_subir"
+                        android:text="@string/subir"
+                        android:textSize="24sp" />
+                </LinearLayout>
+
+                <!-- Mismos límites que OBJETIVO_MIN / OBJETIVO_MAX en Clima.kt -->
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/slObjetivo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:stepSize="1"
+                    android:value="24"
+                    android:valueFrom="10"
+                    android:valueTo="40"
+                    app:tickVisible="false"
+                    app:trackColorInactive="@color/vidrio_fuerte" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/escala_min"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="@color/escala_frio" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/escala_max"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="@color/escala_calor" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ============ Ventilador ============ -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/TarjetaVidrio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <com.example.myapplication.VentiladorView
+                        android:id="@+id/ventiladorIcono"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:importantForAccessibility="no" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/ventilador"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="@color/blanco" />
+
+                        <TextView
+                            android:id="@+id/tvVentiladorEstado"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/sin_datos"
+                            android:textAppearance="?attr/textAppearanceBodySmall"
+                            android:textColor="@color/blanco_suave" />
+                    </LinearLayout>
+
+                    <!-- Cada switch tiene su propia descripción para el lector de pantalla -->
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/swVentilador"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:contentDescription="@string/desc_switch_ventilador" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/modo_auto"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="@color/blanco" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/modo_auto_ayuda"
+                            android:textAppearance="?attr/textAppearanceBodySmall"
+                            android:textColor="@color/blanco_suave" />
+                    </LinearLayout>
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/swAuto"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:contentDescription="@string/desc_switch_auto" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ============ Historial ============ -->
+        <Button
+            android:id="@+id/btnVerHistorial"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:text="@string/ver_historial" />
+    </LinearLayout>
+</ScrollView>

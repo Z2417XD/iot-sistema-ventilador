@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- La pantalla va siempre sobre un fondo de color oscuro, así que todo
+         el contenido se dibuja en blanco con distintas transparencias. -->
+    <color name="blanco">#FFFFFFFF</color>
+    <color name="blanco_suave">#D9FFFFFF</color>      <!-- textos secundarios -->
+    <color name="blanco_tenue">#73FFFFFF</color>      <!-- bordes y controles apagados -->
+    <color name="vidrio">#2E000000</color>            <!-- fondo de las tarjetas: negro al 18 %, para que el texto se lea sobre cualquier color -->
+    <color name="vidrio_fuerte">#3DFFFFFF</color>     <!-- botones − / + y pista del slider -->
+    <color name="vidrio_borde">#29FFFFFF</color>
+    <color name="tinta">#FF10202B</color>             <!-- texto sobre botones blancos -->
+    <color name="aviso">#FFFFD54F</color>             <!-- mensajes de error -->
+    <color name="fondo_inicial">#FF1B2529</color>     <!-- se ve un instante al abrir la app -->
+    <color name="escala_frio">#FFB3E5FC</color>       <!-- texto "10 °C (frío)" bajo el slider -->
+    <color name="escala_calor">#FFFFCCBC</color>      <!-- texto "(caliente) 40 °C" bajo el slider -->
+</resources>
