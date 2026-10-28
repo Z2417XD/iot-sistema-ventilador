@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -36,6 +37,10 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.core.ktx)
+    implementation(platform(libs.firebase.bom))   // versiones compatibles de Firebase
+    implementation(libs.firebase.ai)              // Firebase AI Logic
+    implementation(libs.firebase.auth)            // sesión anónima de Firebase
+    implementation(libs.firebase.firestore)       // base de datos de las métricas
     implementation(libs.material)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)

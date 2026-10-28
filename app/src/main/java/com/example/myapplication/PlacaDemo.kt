@@ -4,15 +4,9 @@ import kotlin.math.roundToInt
 import kotlin.random.Random
 
 /**
- * Placa simulada para probar la app sin el Arduino (botón "Modo demo").
- * Entiende las mismas rutas que el sketch y responde igual:
- *   /estado, /objetivo?valor=24, /auto?on=1, /ventilador?on=1
- *
- * La habitación simulada se calienta sola hasta ~33 °C y el ventilador la
- * enfría hasta ~12 °C, así se pueden ver todos los niveles de la pantalla y
- * probar las alertas de la zona de confort. Por ejemplo:
- *   - objetivo 35 °C  → el ventilador se apaga y la pieza pasa de 25 °C (alerta)
- *   - objetivo 10 °C  → el ventilador no para y la pieza baja de 17 °C (alerta)
+ * Placa simulada para pruebas sin el Arduino (botón "Modo demo").
+ * Responde las mismas rutas que el sketch: /estado, /objetivo, /auto y /ventilador.
+ * Rango simulado: ~12 °C con el ventilador encendido y ~33 °C con el ventilador apagado.
  */
 class PlacaDemo {
 
@@ -33,7 +27,7 @@ class PlacaDemo {
             ventilador = valor == "1"
             auto = false
         } else {
-            avanzar()       // cada consulta de /estado hace pasar el tiempo
+            avanzar()       // avanza la simulación en cada consulta de /estado
         }
 
         // Misma lógica que controlAutomatico() del sketch
@@ -42,10 +36,10 @@ class PlacaDemo {
             if (temperatura <= objetivo - 0.5) ventilador = false
         }
 
-        // Misma lógica que alerta() del sketch (margen de 3 °C sobre el objetivo)
+        // Misma lógica que alerta() del sketch
         val alerta = when {
-            temperatura >= objetivo + 3.0 -> "alta"
-            temperatura <= objetivo - 3.0 -> "baja"
+            temperatura > CONFORT_MAX -> "alta"
+            temperatura < CONFORT_MIN -> "baja"
             else -> "ninguna"
         }
 
@@ -59,6 +53,7 @@ class PlacaDemo {
         )
     }
 
+    /** Simula el cambio de temperatura de la habitación. */
     private fun avanzar() {
         val destino = if (ventilador) 12.0 else 33.0
         temperatura += (destino - temperatura) * 0.03 + Random.nextDouble(-0.05, 0.05)

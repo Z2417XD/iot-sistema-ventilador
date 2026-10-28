@@ -15,17 +15,12 @@ import kotlin.math.sin
 
 private const val ESCALA_MIN = 0f          // escala visual del indicador, en °C
 private const val ESCALA_MAX = 40f
-private const val ANGULO_INICIO = 150f     // el arco deja una abertura abajo
+private const val ANGULO_INICIO = 150f     // ángulo inicial del arco (abertura abajo)
 private const val ANGULO_BARRIDO = 240f
 
 /**
- * Indicador circular de temperatura.
- * - La franja más clara del arco es la zona de confort (CONFORT_MIN a CONFORT_MAX),
- *   con una marca y su valor en cada límite.
- * - El arco blanco se llena según la temperatura actual.
- * - El punto marca la temperatura objetivo.
- * El arco y el punto se mueven con una animación suave cada vez que cambian.
- * Se dibuja en blanco porque va sobre el fondo de color de la pantalla.
+ * Indicador circular de temperatura: arco de la temperatura actual, franja de la
+ * zona de confort con sus límites y punto de la temperatura objetivo.
  */
 class TermometroView @JvmOverloads constructor(
     context: Context,
@@ -84,7 +79,7 @@ class TermometroView @JvmOverloads constructor(
         val destinoTemperatura = if (temperatura != null) fraccion(temperatura) else 0f
         val destinoObjetivo = if (objetivo != null) fraccion(objetivo) else null
         val desdeTemperatura = fraccionMostrada
-        // La primera vez el punto del objetivo aparece directo en su lugar.
+        // Primera vez: el punto del objetivo se ubica sin animación.
         val desdeObjetivo = fraccionObjetivo ?: destinoObjetivo
 
         hayLectura = temperatura != null
@@ -153,8 +148,7 @@ class TermometroView @JvmOverloads constructor(
             canvas.drawArc(caja, ANGULO_INICIO, barrido, false, arco)
         }
 
-        // 3. Marcas de los límites de confort: una raya por fuera del arco y el
-        //    valor por dentro, para que se vean aunque el arco blanco las cubra.
+        // 3. Marcas de los límites de confort (raya exterior y valor interior)
         marcaConfort.strokeWidth = grosor * 0.22f
         etiqueta.textSize = lado * 0.05f
         dibujarLimite(canvas, fraccionConfortMin, textoConfortMin, centroX, centroY, radio, grosor)
@@ -178,6 +172,7 @@ class TermometroView @JvmOverloads constructor(
         canvas.drawText(textoEscalaMax, centroX + radio * cos(anguloFin).toFloat(), yTexto, etiqueta)
     }
 
+    /** Dibuja la marca y el valor de un límite de confort. */
     private fun dibujarLimite(
         canvas: Canvas,
         fraccionLimite: Float,

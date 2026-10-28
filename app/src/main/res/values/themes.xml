@@ -1,6 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Tema oscuro fijo: la app dibuja su propio fondo de color (ver MainActivity),
-         así que los controles usan blanco como color principal. -->
+    <!-- Tema oscuro con blanco como color principal de los controles -->
     <style name="Base.Theme.MyApplication" parent="Theme.Material3.Dark.NoActionBar">
         <item name="colorPrimary">@color/blanco</item>
         <item name="colorOnPrimary">@color/tinta</item>
@@ -15,7 +14,7 @@
 
     <style name="Theme.MyApplication" parent="Base.Theme.MyApplication" />
 
-    <!-- Tarjeta translúcida ("vidrio") que deja ver el fondo de color -->
+    <!-- Tarjeta translúcida (vidrio) -->
     <style name="TarjetaVidrio" parent="Widget.Material3.CardView.Outlined">
         <item name="cardBackgroundColor">@color/vidrio</item>
         <item name="strokeColor">@color/vidrio_borde</item>
@@ -24,7 +23,7 @@
         <item name="cardCornerRadius">24dp</item>
     </style>
 
-    <!-- Ancho del contenido de cada pantalla: todo el ancho en teléfonos -->
+    <!-- Ancho del contenido en teléfonos: ancho completo -->
     <style name="AnchoContenido">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_gravity">center_horizontal</item>

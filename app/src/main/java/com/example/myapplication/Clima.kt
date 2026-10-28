@@ -3,53 +3,44 @@ package com.example.myapplication
 import androidx.annotation.StringRes
 
 // ---------------------------------------------------------------------------
-// Reglas de temperatura de la app. Para cambiar la zona de confort o los
-// límites, basta con editar estas constantes: el indicador, el gráfico, los
-// colores y las alertas las usan todas.
+// Constantes de temperatura usadas por el indicador, el gráfico, los colores y las alertas.
 // ---------------------------------------------------------------------------
 
-/** Zona de confort de la habitación, en °C (los límites cuentan como confort). */
+/** Límites de la zona de confort en °C (ambos incluidos). */
 const val CONFORT_MIN = 17.0
 const val CONFORT_MAX = 25.0
 
-/** Bajo FRIO_EXTREMO la pieza está "Fría"; sobre CALOR_EXTREMO, "Muy caliente". */
+/** Límites de los niveles "Fría" y "Muy caliente" en °C. */
 const val FRIO_EXTREMO = 14.0
 const val CALOR_EXTREMO = 30.0
 
-/**
- * Para que una alerta vuelva a sonar, la temperatura tiene que entrar al menos
- * este margen a la zona de confort. Evita avisos repetidos cuando la lectura
- * oscila justo en un límite (por ejemplo 25,0 → 25,1 → 25,0 → 25,1).
- */
+/** Margen en °C para dar por terminada una alerta; evita avisos repetidos en el límite. */
 const val MARGEN_ALERTA = 0.5
 
-/** Límites de la temperatura objetivo (los mismos que el Slider del layout). */
+/** Límites de la temperatura objetivo en °C. */
 const val OBJETIVO_MIN = 10.0
 const val OBJETIVO_MAX = 40.0
 
-/** Lecturas que guarda el gráfico: 150 lecturas x 2 s = 5 minutos. */
+/** Cantidad de lecturas del historial (150 lecturas cada 2 s = 5 minutos). */
 const val MUESTRAS_HISTORIAL = 150
 
-/** "IP" interna del modo demo. */
+/** Valor de IP que activa el modo demo. */
 const val IP_DEMO = "demo"
 
-/** Lo que responde la placa en /estado. */
+/** Estado que entrega la placa en formato JSON. */
 data class Estado(
-    val temperatura: Double?,   // null si el DHT11 no entregó lectura
+    val temperatura: Double?,   // °C; null si el sensor no entregó lectura
     val humedad: Double?,
-    val ventilador: Boolean,    // true = servo "ventilando"
-    val auto: Boolean,          // true = la placa decide sola según el objetivo
+    val ventilador: Boolean,    // true = ventilador encendido
+    val auto: Boolean,          // true = control automático según el objetivo
     val objetivo: Double,       // temperatura deseada en °C
-    val alerta: String          // la calcula la placa; la app usa la zona de confort
+    val alerta: String          // "alta", "baja" o "ninguna"
 )
 
-/** Dónde está la temperatura respecto a la zona de confort. */
+/** Posición de la temperatura respecto a la zona de confort. */
 enum class Zona { BAJO, CONFORT, SOBRE }
 
-/**
- * Cómo se siente la habitación. Cada nivel tiene su texto y los dos colores
- * del degradado de fondo (arriba y abajo).
- */
+/** Nivel de temperatura con su texto y los colores del degradado de fondo (arriba y abajo). */
 enum class NivelTemperatura(
     @param:StringRes val titulo: Int,
     val colorArriba: Int,
@@ -63,17 +54,14 @@ enum class NivelTemperatura(
     MUY_CALIENTE(R.string.nivel_muy_caliente, 0xFFC62828.toInt(), 0xFF5A0E14.toInt())   // rojo
 }
 
-/** Zona exacta de una temperatura (la que se muestra en pantalla). */
+/** Zona de confort que corresponde a una temperatura. */
 fun zonaDe(temperatura: Double): Zona = when {
     temperatura < CONFORT_MIN -> Zona.BAJO
     temperatura > CONFORT_MAX -> Zona.SOBRE
     else -> Zona.CONFORT
 }
 
-/**
- * Zona para las alertas: igual que zonaDe(), pero para dar por "vuelta a la
- * normalidad" una alerta hay que entrar MARGEN_ALERTA grados a la zona de confort.
- */
+/** Zona usada para las alertas; aplica MARGEN_ALERTA al volver a la zona de confort. */
 fun zonaParaAlertas(temperatura: Double, anterior: Zona?): Zona {
     val exacta = zonaDe(temperatura)
     return when {

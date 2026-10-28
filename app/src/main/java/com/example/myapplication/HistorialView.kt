@@ -15,13 +15,7 @@ import android.view.View
 import android.view.animation.PathInterpolator
 import java.util.Locale
 
-/**
- * Gráfico con las últimas lecturas de temperatura. La curva se dibuja
- * suavizada, se desliza hacia la izquierda cuando llega una lectura nueva y
- * la escala vertical se acomoda de a poco en vez de saltar.
- * La franja clara es la zona de confort y la línea punteada, el objetivo.
- * Se dibuja en blanco porque va sobre el fondo de color de la pantalla.
- */
+/** Gráfico de las últimas temperaturas, con la zona de confort (franja) y el objetivo (línea punteada). */
 class HistorialView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
@@ -63,11 +57,11 @@ class HistorialView @JvmOverloads constructor(
     private var datos: List<Float> = emptyList()
     private var objetivo: Float? = null
 
-    // Valores que se animan
+    // Valores animados
     private var escalaLista = false
     private var minimoMostrado = 0f
     private var maximoMostrado = 1f
-    private var corrimiento = 0f        // 1 -> 0: la curva avanza un paso hacia la izquierda
+    private var corrimiento = 0f        // desplazamiento horizontal animado (1 a 0)
     private var animador: ValueAnimator? = null
 
     init {
@@ -79,10 +73,7 @@ class HistorialView @JvmOverloads constructor(
         )
     }
 
-    /**
-     * Actualiza el gráfico. "nuevaLectura" indica que se agregó un punto al
-     * final de la lista (y por eso la curva debe deslizarse).
-     */
+    /** Actualiza el gráfico; nuevaLectura activa el desplazamiento de la curva. */
     fun mostrar(datos: List<Float>, objetivo: Float?, nuevaLectura: Boolean) {
         this.datos = datos
         this.objetivo = objetivo
@@ -95,8 +86,7 @@ class HistorialView @JvmOverloads constructor(
             return
         }
 
-        // Escala vertical: cubre las lecturas, el objetivo y la zona de confort,
-        // con 1 °C de margen.
+        // Escala vertical: lecturas, objetivo y zona de confort, con 1 °C de margen.
         var minimo = minOf(datos[0], CONFORT_MIN.toFloat())
         var maximo = maxOf(datos[0], CONFORT_MAX.toFloat())
         for (valor in datos) {
@@ -138,7 +128,7 @@ class HistorialView @JvmOverloads constructor(
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        // Relleno bajo la curva: blanco que se desvanece hacia abajo.
+        // Degradado del relleno bajo la curva.
         relleno.shader = LinearGradient(
             0f, 0f, 0f, h.toFloat(),
             Color.argb(90, 255, 255, 255), Color.argb(0, 255, 255, 255),
@@ -170,8 +160,7 @@ class HistorialView @JvmOverloads constructor(
         if (rango <= 0f) return
         val alto = abajo - arriba
 
-        // La lectura más nueva queda en el borde derecho. Mientras dura la
-        // animación todo está corrido un paso a la derecha y va volviendo.
+        // Posición horizontal: la lectura más nueva queda en el borde derecho.
         val pasoX = (derecha - izquierda) / (MUESTRAS_HISTORIAL - 1)
         val inicioX = derecha - pasoX * (datos.size - 1) + pasoX * corrimiento
 
@@ -184,7 +173,7 @@ class HistorialView @JvmOverloads constructor(
             if (i == 0) {
                 trazo.moveTo(x, y)
             } else {
-                // Curva suave entre un punto y el siguiente
+                // Curva suavizada entre puntos consecutivos
                 val medio = (xAnterior + x) / 2f
                 trazo.cubicTo(medio, yAnterior, medio, y, x, y)
             }
@@ -198,7 +187,7 @@ class HistorialView @JvmOverloads constructor(
 
         canvas.save()
         canvas.clipRect(izquierda, 0f, derecha + 8f * densidad, height.toFloat())
-        // Franja de la zona de confort, detrás de la curva
+        // Franja de la zona de confort
         val yConfortMax = abajo - (CONFORT_MAX.toFloat() - minimoMostrado) / rango * alto
         val yConfortMin = abajo - (CONFORT_MIN.toFloat() - minimoMostrado) / rango * alto
         canvas.drawRect(izquierda, yConfortMax, derecha + 8f * densidad, yConfortMin, franjaConfort)

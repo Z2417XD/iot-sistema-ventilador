@@ -6,10 +6,7 @@ import android.graphics.drawable.GradientDrawable
 import android.view.View
 import android.view.animation.PathInterpolator
 
-/**
- * Fondo degradado de una pantalla. Al cambiar de nivel, los colores pasan de
- * uno a otro en vez de cambiar de golpe.
- */
+/** Fondo degradado de una pantalla, con transición de color entre niveles. */
 class FondoAnimado(vista: View) {
 
     private val suave = PathInterpolator(0.2f, 0f, 0f, 1f)

@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Igual que values/themes.xml: la app se ve igual con el teléfono en modo claro u oscuro. -->
+    <!-- Mismo tema que values/themes.xml para el modo oscuro del sistema. -->
     <style name="Base.Theme.MyApplication" parent="Theme.Material3.Dark.NoActionBar">
         <item name="colorPrimary">@color/blanco</item>
         <item name="colorOnPrimary">@color/tinta</item>

@@ -7,17 +7,19 @@ import android.widget.TextView
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import java.text.DateFormat
+import java.util.Date
 
-/**
- * Parámetros en tiempo real y gráfico de los últimos 5 minutos.
- * Los datos vienen de Placa, que sigue consultando la placa mientras esta
- * pantalla está abierta.
- */
+/** Pantalla de parámetros en tiempo real, gráfico de los últimos 5 minutos y métricas. */
 class HistorialActivity : AppCompatActivity() {
 
     private lateinit var tvParametros: TextView
     private lateinit var grafico: HistorialView
+    private lateinit var tvMetricas: TextView
+    private lateinit var btnGuardarMetricas: Button
+    private lateinit var tvGuardado: TextView
     private lateinit var fondo: FondoAnimado
+    private var guardando = false
 
     private val oyente: (Boolean) -> Unit = { nuevaLectura -> pintar(nuevaLectura) }
 
@@ -33,7 +35,11 @@ class HistorialActivity : AppCompatActivity() {
 
         tvParametros = findViewById(R.id.tvParametros)
         grafico = findViewById(R.id.graficoHistorial)
+        tvMetricas = findViewById(R.id.tvMetricas)
+        btnGuardarMetricas = findViewById(R.id.btnGuardarMetricas)
+        tvGuardado = findViewById(R.id.tvGuardado)
         findViewById<Button>(R.id.btnVolver).setOnClickListener { finish() }
+        btnGuardarMetricas.setOnClickListener { guardarEnFirebase() }
     }
 
     override fun onStart() {
@@ -80,6 +86,47 @@ class HistorialActivity : AppCompatActivity() {
         }
 
         grafico.mostrar(Placa.historial, estado?.objetivo?.toFloat(), nuevaLectura)
+        pintarMetricas()
+    }
+
+    /** Calcula y muestra las métricas con las lecturas del historial. */
+    private fun pintarMetricas() {
+        val metricas = calcularMetricas(Placa.historial)
+        if (metricas == null) {
+            tvMetricas.setText(R.string.metricas_sin_datos)
+        } else {
+            tvMetricas.text = getString(
+                R.string.metricas_formato,
+                metricas.lecturas,
+                metricas.minima,
+                metricas.maxima,
+                metricas.promedio,
+                metricas.porcentajeConfort
+            )
+        }
+        btnGuardarMetricas.isEnabled = metricas != null && !guardando
+    }
+
+    /** Guarda las métricas actuales en Firestore. */
+    private fun guardarEnFirebase() {
+        val metricas = calcularMetricas(Placa.historial) ?: return
+        guardando = true
+        btnGuardarMetricas.isEnabled = false
+        tvGuardado.setText(R.string.metricas_guardando)
+
+        guardarMetricas(metricas, Placa.estado) { exito ->
+            guardando = false
+            if (isDestroyed) return@guardarMetricas
+            tvGuardado.text = if (exito) {
+                getString(
+                    R.string.metricas_guardadas,
+                    DateFormat.getTimeInstance(DateFormat.SHORT).format(Date())
+                )
+            } else {
+                getString(R.string.metricas_error)
+            }
+            pintarMetricas()
+        }
     }
 
     private fun textoZona(zona: Zona?): Int = when (zona) {

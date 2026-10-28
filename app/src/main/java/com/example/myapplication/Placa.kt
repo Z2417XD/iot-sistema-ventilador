@@ -11,29 +11,25 @@ import java.net.URL
 import java.util.concurrent.Executors
 
 /**
- * Conexión con la placa, compartida por todas las pantallas.
- *
- * Mientras haya al menos una pantalla visible registrada, consulta /estado
- * cada 2 segundos, guarda el historial y revisa la zona de confort para
- * mandar alertas. Así los datos siguen llegando aunque se cambie de pantalla
- * (antes, al abrir el historial la consulta se detenía).
+ * Conexión HTTP con la placa Arduino UNO R4 WiFi, compartida por todas las pantallas.
+ * Consulta /estado cada 2 segundos mientras haya una pantalla registrada,
+ * guarda el historial y revisa la zona de confort para las alertas.
  */
 object Placa {
 
     private const val TAG = "Placa"
     private const val INTERVALO_MS = 2000L
 
-    // La red no puede usarse en el hilo principal: las peticiones van a este
-    // hilo y el resultado vuelve al hilo principal con "principal".
+    // Hilo de red y hilo principal (la red no puede usarse en el hilo principal).
     private val hilo = Executors.newSingleThreadExecutor()
     private val principal = Handler(Looper.getMainLooper())
-    private val placaDemo = PlacaDemo()                 // solo se usa desde "hilo"
+    private val placaDemo = PlacaDemo()                 // usado solo desde "hilo"
 
-    /** Pantallas interesadas. Reciben true cuando llegó una lectura nueva. */
+    /** Pantallas registradas; reciben true cuando llega una lectura nueva. */
     private val oyentes = mutableListOf<(Boolean) -> Unit>()
     private val lecturas = ArrayDeque<Float>()
     private var consultaEnCurso = false
-    private var zonaAvisada: Zona? = null               // última zona que generó (o quitó) una alerta
+    private var zonaAvisada: Zona? = null               // última zona notificada
     private var contexto: WeakReference<Context>? = null
 
     /** IP que se está consultando ("" = ninguna, IP_DEMO = modo demo). */
@@ -71,20 +67,20 @@ object Placa {
         }
     }
 
-    /** Llamar en onStart de cada pantalla. */
+    /** Registra una pantalla (se llama en onStart). */
     fun registrar(contexto: Context, oyente: (Boolean) -> Unit) {
         this.contexto = WeakReference(contexto.applicationContext)
         if (oyente !in oyentes) oyentes.add(oyente)
         if (oyentes.size == 1) reiniciarConsulta()
     }
 
-    /** Llamar en onStop de cada pantalla. */
+    /** Quita una pantalla (se llama en onStop). */
     fun desregistrar(oyente: (Boolean) -> Unit) {
         oyentes.remove(oyente)
         if (oyentes.isEmpty()) principal.removeCallbacks(consulta)
     }
 
-    /** Empieza a consultar otra placa (o el modo demo) desde cero. */
+    /** Cambia la IP consultada (o activa el modo demo) y reinicia los datos. */
     fun conectar(nuevaIp: String) {
         ip = nuevaIp
         estado = null
@@ -99,11 +95,13 @@ object Placa {
     /** Envía una orden a la placa, por ejemplo "/objetivo?valor=24". */
     fun enviarOrden(ruta: String) = pedir(ruta, esConsulta = false)
 
+    /** Reinicia la consulta periódica de /estado. */
     private fun reiniciarConsulta() {
         principal.removeCallbacks(consulta)
         principal.post(consulta)
     }
 
+    /** Envía una petición a la placa en el hilo de red. */
     private fun pedir(ruta: String, esConsulta: Boolean) {
         val ipPedida = ip
         if (ipPedida.isBlank()) {
@@ -123,10 +121,11 @@ object Placa {
         }
     }
 
+    /** Procesa la respuesta de la placa en el hilo principal. */
     private fun procesar(ipPedida: String, recibido: Estado?, esConsulta: Boolean) {
         if (esConsulta) consultaEnCurso = false else ordenesPendientes--
 
-        // Si mientras tanto cambió la IP, esta respuesta ya no sirve.
+        // Descarta respuestas de una IP anterior.
         if (ipPedida == ip) {
             if (recibido != null) {
                 estado = recibido
@@ -140,7 +139,7 @@ object Placa {
                 revisarZona(temperatura)
                 avisar(nuevaLectura)
             } else {
-                // No se deja una lectura vieja como si fuera actual.
+                // Sin conexión: se descarta el último estado.
                 estado = null
                 hayError = true
                 avisar(nuevaLectura = false)
@@ -153,7 +152,7 @@ object Placa {
         }
     }
 
-    /** Manda una alerta cuando la temperatura sale de la zona de confort. */
+    /** Envía o retira la alerta según la zona de confort. */
     private fun revisarZona(temperatura: Double?) {
         if (temperatura == null) return
         val anterior = zonaAvisada
@@ -163,17 +162,19 @@ object Placa {
 
         val ctx = contexto?.get() ?: return
         if (nueva == Zona.CONFORT) {
-            Alertas.quitar(ctx)          // volvió a la normalidad: se retira la alerta
+            Alertas.quitar(ctx)          // temperatura dentro de la zona de confort
         } else {
             Alertas.avisarFueraDeConfort(ctx, nueva, temperatura)
         }
     }
 
+    /** Notifica a las pantallas registradas. */
     private fun avisar(nuevaLectura: Boolean) {
-        // Se recorre una copia por si una pantalla se desregistra al recibir el aviso.
+        // Copia de la lista: permite desregistrar durante el aviso.
         for (oyente in oyentes.toList()) oyente(nuevaLectura)
     }
 
+    /** Petición HTTP GET a la placa y lectura del JSON de respuesta. */
     private fun descargar(ip: String, ruta: String): Estado {
         val conexion = URL("http://$ip$ruta").openConnection() as HttpURLConnection
         try {

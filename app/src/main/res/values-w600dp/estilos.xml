@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- En pantallas de 600 dp o más (tablets) el contenido queda centrado y
-         no se estira: así los campos y botones mantienen un ancho cómodo. -->
+    <!-- Ancho del contenido en pantallas de 600 dp o más (tablets): 560 dp centrado -->
     <style name="AnchoContenido">
         <item name="android:layout_width">560dp</item>
         <item name="android:layout_gravity">center_horizontal</item>

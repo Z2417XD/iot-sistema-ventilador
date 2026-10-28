@@ -49,25 +49,31 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: SharedPreferences
     private lateinit var fondo: FondoAnimado
 
-    private var objetivoActual: Double? = null  // objetivo que se ve en pantalla
+    private var objetivoActual: Double? = null  // objetivo mostrado en pantalla
     private var actualizandoPantalla = false    // evita que los switches reenvíen órdenes
-    private var arrastrando = false             // el usuario está moviendo el slider
+    private var arrastrando = false             // slider en uso
 
     // --- Animaciones ---
-    private val suave = PathInterpolator(0.2f, 0f, 0f, 1f)   // parte rápido y frena suave
+    private val suave = PathInterpolator(0.2f, 0f, 0f, 1f)   // curva de aceleración de las animaciones
     private var temperaturaMostrada: Float? = null
     private var animacionTemperatura: ValueAnimator? = null
 
-    // Android 13+ exige pedir el permiso de notificaciones mientras la app corre.
+    // Solicitud del permiso de notificaciones (Android 13+).
     private val pedirPermiso =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
-    /** Placa avisa aquí cada vez que cambia algo (lectura, error o conexión nueva). */
+    /** Recibe los cambios de Placa (lectura, error o conexión nueva). */
     private val oyente: (Boolean) -> Unit = { pintar() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // El fondo siempre es oscuro, así que los íconos de las barras van en blanco.
+        // Redirige al login si no hay sesión activa.
+        if (!Sesion.activa) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
+        // Íconos claros en las barras del sistema.
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT)
@@ -95,7 +101,7 @@ class MainActivity : AppCompatActivity() {
         ventiladorIcono = findViewById(R.id.ventiladorIcono)
         btnVerHistorial = findViewById(R.id.btnVerHistorial)
 
-        // La IP guardada se usa al abrir la app; el modo demo no se guarda.
+        // Conexión automática con la última IP guardada.
         prefs = getSharedPreferences("clima", MODE_PRIVATE)
         val ipGuardada = prefs.getString("ip", "") ?: ""
         etIp.setText(if (Placa.ip.isNotBlank() && Placa.ip != IP_DEMO) Placa.ip else ipGuardada)
@@ -109,14 +115,12 @@ class MainActivity : AppCompatActivity() {
         }
         btnDemo.setOnClickListener { Placa.conectar(IP_DEMO) }
 
-        // --- Subir y bajar la temperatura objetivo ---
-        // El modo automático usa la temperatura objetivo para decidir cuándo
-        // prender el ventilador. Por eso, cambiar el objetivo no lo desactiva.
+        // --- Temperatura objetivo ---
         btnBajar.setOnClickListener { objetivoActual?.let { cambiarObjetivo(it - 1) } }
         btnSubir.setOnClickListener { objetivoActual?.let { cambiarObjetivo(it + 1) } }
         slObjetivo.setLabelFormatter { valor -> getString(R.string.objetivo_valor, valor) }
         slObjetivo.addOnChangeListener { _, valor, delUsuario ->
-            // Mientras se arrastra solo cambia el número; la orden se envía al soltar.
+            // Actualiza el número al arrastrar; la orden se envía al soltar.
             if (delUsuario) tvObjetivo.text = getString(R.string.objetivo_valor, valor)
         }
         slObjetivo.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
@@ -130,8 +134,7 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        // --- Ventilador ---
-        // Encender o apagar a mano desactiva el modo automático (lo hace la placa).
+        // --- Ventilador (el control manual desactiva el modo automático en la placa) ---
         swAuto.setOnCheckedChangeListener { _, activo ->
             if (!actualizandoPantalla) Placa.enviarOrden("/auto?on=${if (activo) 1 else 0}")
         }
@@ -152,7 +155,7 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState == null) animarEntrada(findViewById(R.id.contenido))
     }
 
-    // Mientras esta pantalla está visible recibe los datos de la placa.
+    // Registro en Placa mientras la pantalla está visible.
     override fun onStart() {
         super.onStart()
         Placa.registrar(this, oyente)
@@ -167,10 +170,10 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         animacionTemperatura?.cancel()
-        fondo.detener()
+        if (::fondo.isInitialized) fondo.detener()
     }
 
-    /** El usuario cambió el objetivo: la pantalla responde al tiro y luego se avisa a la placa. */
+    /** Muestra el nuevo objetivo y envía la orden a la placa. */
     private fun cambiarObjetivo(nuevo: Double) {
         val valor = nuevo.coerceIn(OBJETIVO_MIN, OBJETIVO_MAX)
         mostrarObjetivo(valor, conRebote = true)
@@ -183,7 +186,7 @@ class MainActivity : AppCompatActivity() {
     // Pantalla
     // -----------------------------------------------------------------------
 
-    /** Dibuja la pantalla con lo que tiene Placa en este momento. */
+    /** Actualiza la pantalla con el estado actual de Placa. */
     private fun pintar() {
         tvConexion.text = textoConexion()
 
@@ -204,13 +207,12 @@ class MainActivity : AppCompatActivity() {
         val temperatura = estado.temperatura
         val nivel = Placa.nivel
 
-        // Mientras haya una orden sin responder no se pisan los controles con
-        // datos viejos: así no "saltan" justo después de tocarlos.
+        // Evita sobrescribir los controles mientras hay órdenes sin respuesta.
         val controlesAlDia = Placa.ordenesPendientes == 0
         if (controlesAlDia && !arrastrando) mostrarObjetivo(estado.objetivo, conRebote = false)
         val objetivo = (objetivoActual ?: estado.objetivo).toFloat()
 
-        // Estado de la habitación: el fondo dice de un vistazo si está fría o caliente.
+        // Estado de la habitación
         fondo.mostrar(nivel)
         mostrarTemperatura(temperatura?.toFloat())
         cambiarTexto(
@@ -223,7 +225,7 @@ class MainActivity : AppCompatActivity() {
 
         // Ventilador
         if (controlesAlDia) {
-            // Cambiar isChecked dispara el listener; la bandera evita reenviar la orden.
+            // La bandera evita que el listener reenvíe la orden.
             actualizandoPantalla = true
             swAuto.isChecked = estado.auto
             swVentilador.isChecked = estado.ventilador
@@ -237,6 +239,7 @@ class MainActivity : AppCompatActivity() {
         habilitarControles(true)
     }
 
+    /** Texto del estado de la conexión. */
     private fun textoConexion(): String = when {
         Placa.ip.isBlank() -> getString(R.string.conexion_escribe_ip)
         Placa.ip == IP_DEMO -> getString(R.string.conexion_demo)
@@ -245,7 +248,7 @@ class MainActivity : AppCompatActivity() {
         else -> getString(R.string.conexion_conectado, Placa.ip)
     }
 
-    /** Frase bajo el estado: dónde está la temperatura respecto a la zona de confort. */
+    /** Texto de la posición de la temperatura respecto a la zona de confort. */
     private fun detalle(temperatura: Double?): String {
         if (temperatura == null) return getString(R.string.detalle_sensor)
         return when (zonaDe(temperatura)) {
@@ -255,6 +258,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /** Muestra la pantalla sin datos de la placa. */
     private fun mostrarSinDatos() {
         objetivoActual = null
         fondo.mostrar(NivelTemperatura.SIN_DATOS)
@@ -269,13 +273,14 @@ class MainActivity : AppCompatActivity() {
         habilitarControles(false)
     }
 
+    /** Muestra el objetivo en el número y el slider. */
     private fun mostrarObjetivo(valor: Double, conRebote: Boolean) {
         objetivoActual = valor
         val texto = getString(R.string.objetivo_valor, valor)
         if (tvObjetivo.text.toString() != texto) {
             tvObjetivo.text = texto
             if (conRebote) {
-                // El número "salta" un poco para confirmar el toque.
+                // Animación de rebote al cambiar el valor.
                 tvObjetivo.animate().cancel()
                 tvObjetivo.scaleX = 1.2f
                 tvObjetivo.scaleY = 1.2f
@@ -293,6 +298,7 @@ class MainActivity : AppCompatActivity() {
         if (slObjetivo.value != enSlider) slObjetivo.value = enSlider
     }
 
+    /** Activa o desactiva los controles según la conexión. */
     private fun habilitarControles(conectado: Boolean) {
         val objetivo = objetivoActual
         btnBajar.isEnabled = conectado && objetivo != null && objetivo > OBJETIVO_MIN
@@ -306,7 +312,7 @@ class MainActivity : AppCompatActivity() {
     // Animaciones
     // -----------------------------------------------------------------------
 
-    /** El número grande "cuenta" hasta el valor nuevo. */
+    /** Anima el número de temperatura hasta el valor nuevo. */
     private fun mostrarTemperatura(nueva: Float?) {
         animacionTemperatura?.cancel()
         if (nueva == null) {
@@ -331,7 +337,7 @@ class MainActivity : AppCompatActivity() {
         animacionTemperatura = animacion
     }
 
-    /** Cambia un texto con un fundido corto en vez de reemplazarlo de golpe. */
+    /** Cambia un texto con un fundido. */
     private fun cambiarTexto(vista: TextView, texto: String) {
         if (vista.text.toString() == texto) return
         vista.animate().cancel()
@@ -345,7 +351,7 @@ class MainActivity : AppCompatActivity() {
             .start()
     }
 
-    /** Las secciones suben y aparecen una después de la otra. */
+    /** Animación de entrada de las secciones. */
     private fun animarEntrada(contenedor: ViewGroup) {
         val distancia = 32f * resources.displayMetrics.density
         for (i in 0 until contenedor.childCount) {

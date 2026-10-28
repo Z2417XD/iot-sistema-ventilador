@@ -13,7 +13,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 
-/** Notificaciones de la zona de confort. */
+/** Notificaciones de alerta por temperatura fuera de la zona de confort. */
 object Alertas {
 
     private const val TAG = "Alertas"
@@ -32,7 +32,7 @@ object Alertas {
         }
     }
 
-    /** En Android 13+ el usuario tiene que aceptar el permiso; antes no existe. */
+    /** Indica si la app puede mostrar notificaciones (permiso requerido desde Android 13). */
     fun tienePermiso(contexto: Context): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
             ContextCompat.checkSelfPermission(contexto, Manifest.permission.POST_NOTIFICATIONS) ==
@@ -46,7 +46,7 @@ object Alertas {
         )
         val texto = contexto.getString(R.string.alerta_texto, temperatura, CONFORT_MIN, CONFORT_MAX)
 
-        // Tocar la notificación abre la app (sin crear una pantalla repetida).
+        // Abre la app al tocar la notificación, reutilizando la pantalla existente.
         val abrirApp = PendingIntent.getActivity(
             contexto,
             0,
@@ -64,8 +64,7 @@ object Alertas {
             .setAutoCancel(true)
             .build()
 
-        // El permiso se revisó arriba, pero el usuario puede quitarlo en cualquier
-        // momento desde Ajustes; en ese caso Android lanza SecurityException.
+        // Captura el error si el permiso fue revocado desde Ajustes.
         try {
             NotificationManagerCompat.from(contexto).notify(ID_ALERTA, notificacion)
         } catch (e: SecurityException) {
@@ -73,7 +72,7 @@ object Alertas {
         }
     }
 
-    /** Retira la alerta cuando la temperatura vuelve a la zona de confort. */
+    /** Elimina la notificación de alerta activa. */
     fun quitar(contexto: Context) {
         NotificationManagerCompat.from(contexto).cancel(ID_ALERTA)
     }

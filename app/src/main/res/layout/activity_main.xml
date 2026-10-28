@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- El fondo (degradado de color) lo pone y lo anima MainActivity según el
-     estado de la habitación. Todo el contenido va en blanco sobre ese fondo.
-     fitsSystemWindows deja el contenido fuera de la barra de estado y de la
-     barra de navegación, mientras el fondo sí se dibuja detrás de ellas. -->
+<!-- Pantalla principal. Fondo degradado asignado desde MainActivity según el nivel de temperatura.
+     fitsSystemWindows: separa el contenido de las barras del sistema. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -14,8 +12,7 @@
     tools:background="#1565C0"
     tools:context=".MainActivity">
 
-    <!-- AnchoContenido: en teléfonos ocupa todo el ancho; en tablets queda
-         centrado con un ancho máximo (ver values-w600dp/estilos.xml). -->
+    <!-- AnchoContenido: ancho completo en teléfonos, ancho máximo centrado en tablets -->
     <LinearLayout
         android:id="@+id/contenido"
         style="@style/AnchoContenido"
@@ -45,7 +42,7 @@
                 android:layout_weight="1"
                 android:hint="@string/hint_ip">
 
-                <!-- maxWidth: en tablets el campo no se estira de más -->
+                <!-- maxWidth: ancho máximo del campo en tablets -->
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etIp"
                     android:layout_width="match_parent"
@@ -112,7 +109,7 @@
                 android:textAppearance="?attr/textAppearanceLabelLarge"
                 android:textColor="@color/blanco_suave" />
 
-            <!-- La franja clara del indicador es la zona de confort (17 a 25 °C) -->
+            <!-- Indicador de temperatura con la zona de confort (17 a 25 °C) -->
             <FrameLayout
                 android:layout_width="260dp"
                 android:layout_height="260dp">
@@ -129,7 +126,7 @@
                     android:gravity="center_horizontal"
                     android:orientation="vertical">
 
-                    <!-- "tnum" = números de ancho fijo, para que no se muevan al contar -->
+                    <!-- "tnum": números de ancho fijo -->
                     <TextView
                         android:id="@+id/tvTemperatura"
                         android:layout_width="wrap_content"
@@ -169,7 +166,7 @@
                 android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- ============ Temperatura objetivo: subir y bajar ============ -->
+        <!-- ============ Temperatura objetivo ============ -->
         <com.google.android.material.card.MaterialCardView
             style="@style/TarjetaVidrio"
             android:layout_width="match_parent"
@@ -183,7 +180,7 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- labelFor: el lector de pantalla anuncia este título al llegar al slider -->
+                <!-- labelFor: título del slider para el lector de pantalla -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -230,7 +227,7 @@
                         android:textSize="24sp" />
                 </LinearLayout>
 
-                <!-- Mismos límites que OBJETIVO_MIN / OBJETIVO_MAX en Clima.kt -->
+                <!-- Límites iguales a OBJETIVO_MIN / OBJETIVO_MAX de Clima.kt -->
                 <com.google.android.material.slider.Slider
                     android:id="@+id/slObjetivo"
                     android:layout_width="match_parent"
@@ -314,7 +311,7 @@
                             android:textColor="@color/blanco_suave" />
                     </LinearLayout>
 
-                    <!-- Cada switch tiene su propia descripción para el lector de pantalla -->
+                    <!-- contentDescription: descripción del switch para el lector de pantalla -->
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swVentilador"
                         android:layout_width="wrap_content"

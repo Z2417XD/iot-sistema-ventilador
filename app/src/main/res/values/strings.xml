@@ -77,4 +77,22 @@
     <string name="alerta_sobre_titulo">La habitación se pasó de la zona de confort</string>
     <string name="alerta_bajo_titulo">La habitación bajó de la zona de confort</string>
     <string name="alerta_texto">Está a %1$.1f °C. La zona de confort va de %2$.0f a %3$.0f °C.</string>
+
+    <!-- Login -->
+    <string name="login_subtitulo">Inicia sesión para continuar</string>
+    <string name="login_usuario">Usuario</string>
+    <string name="login_clave">Contraseña</string>
+    <string name="login_ingresar">Ingresar</string>
+    <string name="login_error">Usuario o contraseña incorrectos. Te quedan %1$d intentos.</string>
+    <string name="login_bloqueado">Demasiados intentos. Espera %1$d segundos.</string>
+    <string name="login_pie">App básica de prueba · TI3042</string>
+
+    <!-- Métricas -->
+    <string name="metricas_titulo">Métricas (últimos 5 minutos)</string>
+    <string name="metricas_sin_datos">Aún no hay lecturas para calcular métricas.</string>
+    <string name="metricas_formato">Lecturas: %1$d\nMínima: %2$.1f °C\nMáxima: %3$.1f °C\nPromedio: %4$.1f °C\nEn zona de confort: %5$.0f %%</string>
+    <string name="metricas_guardar">Guardar en Firebase</string>
+    <string name="metricas_guardando">Guardando… (si no hay internet, se envía al reconectar)</string>
+    <string name="metricas_guardadas">Guardadas en Firebase a las %1$s</string>
+    <string name="metricas_error">No se pudieron guardar. Revisa internet y la configuración de Firebase.</string>
 </resources>

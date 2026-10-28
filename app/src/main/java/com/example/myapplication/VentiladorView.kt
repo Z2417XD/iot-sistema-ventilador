@@ -10,10 +10,7 @@ import android.view.View
 
 private const val VELOCIDAD_MAXIMA = 540f      // grados por segundo
 
-/**
- * Ícono de ventilador de tres aspas. Al encenderlo acelera de a poco y al
- * apagarlo va frenando, como un ventilador de verdad.
- */
+/** Ícono de ventilador de tres aspas con giro animado al encender y apagar. */
 class VentiladorView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
@@ -33,6 +30,7 @@ class VentiladorView @JvmOverloads constructor(
     private var velocidad = 0f          // grados por segundo
     private var ultimoCuadro = 0L
 
+    /** Enciende o apaga la animación de giro. */
     fun encender(valor: Boolean) {
         if (encendido == valor) return
         encendido = valor
@@ -42,12 +40,12 @@ class VentiladorView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        // Tiempo desde el cuadro anterior (con tope, por si la vista estuvo oculta)
+        // Tiempo desde el cuadro anterior (máximo 50 ms)
         val ahora = SystemClock.uptimeMillis()
         val segundos = if (ultimoCuadro == 0L) 0f else minOf((ahora - ultimoCuadro) / 1000f, 0.05f)
         ultimoCuadro = ahora
 
-        // La velocidad se acerca de a poco a la que corresponde
+        // Aceleración y frenado graduales
         val destino = if (encendido) VELOCIDAD_MAXIMA else 0f
         velocidad += (destino - velocidad) * minOf(segundos * 2.5f, 1f)
         if (!encendido && velocidad < 3f) velocidad = 0f
@@ -72,7 +70,7 @@ class VentiladorView @JvmOverloads constructor(
         canvas.drawCircle(centroX, centroY, radio * 0.2f, aspas)
         canvas.drawCircle(centroX, centroY, radio * 0.09f, centro)
 
-        // Mientras gire, se pide el siguiente cuadro
+        // Siguiente cuadro mientras gire
         if (encendido || velocidad > 0f) {
             postInvalidateOnAnimation()
         } else {
