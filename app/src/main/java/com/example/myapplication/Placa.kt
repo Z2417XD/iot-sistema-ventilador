@@ -48,17 +48,21 @@ object Placa {
     var ordenesPendientes = 0
         private set
 
+    /** Nivel actual (texto y color), con margen en los límites. */
+    var nivel = NivelTemperatura.SIN_DATOS
+        private set
+
+    /** true si está activo el modo demo. */
+    val enModoDemo: Boolean
+        get() = ip == IP_DEMO
+
     /** Últimas temperaturas, de la más antigua a la más nueva. */
     val historial: List<Float>
         get() = lecturas.toList()
 
-    /** Nivel (texto y color) del estado actual. */
-    val nivel: NivelTemperatura
-        get() = nivelDe(estado?.temperatura)
-
-    /** Zona exacta del estado actual, o null si no hay lectura. */
+    /** Zona de confort del nivel actual, o null sin datos. */
     val zona: Zona?
-        get() = estado?.temperatura?.let { zonaDe(it) }
+        get() = zonaDe(nivel)
 
     private val consulta = Runnable {
         if (ip.isNotBlank() && !consultaEnCurso) {
@@ -80,19 +84,21 @@ object Placa {
         if (oyentes.isEmpty()) principal.removeCallbacks(consulta)
     }
 
-    /** Cambia la IP consultada (o activa el modo demo) y reinicia los datos. */
+    /** Cambia la IP consultada ("" desconecta, IP_DEMO activa el modo demo) y reinicia los datos. */
     fun conectar(nuevaIp: String) {
         ip = nuevaIp
         estado = null
         hayError = false
+        nivel = NivelTemperatura.SIN_DATOS
         lecturas.clear()
         zonaAvisada = null
         contexto?.get()?.let { Alertas.quitar(it) }
+        if (nuevaIp == IP_DEMO) hilo.execute { placaDemo.reiniciar() }
         avisar(nuevaLectura = false)
         if (oyentes.isNotEmpty()) reiniciarConsulta()
     }
 
-    /** Envía una orden a la placa, por ejemplo "/objetivo?valor=24". */
+    /** Envía una orden a la placa, por ejemplo "/ventilador?on=1". */
     fun enviarOrden(ruta: String) = pedir(ruta, esConsulta = false)
 
     /** Reinicia la consulta periódica de /estado. */
@@ -132,16 +138,20 @@ object Placa {
                 hayError = false
                 val temperatura = recibido.temperatura
                 val nuevaLectura = esConsulta && temperatura != null
-                if (temperatura != null && nuevaLectura) {
-                    lecturas.addLast(temperatura.toFloat())
-                    if (lecturas.size > MUESTRAS_HISTORIAL) lecturas.removeFirst()
+                if (temperatura != null) {
+                    nivel = nivelConMargen(temperatura, nivel)
+                    if (nuevaLectura) {
+                        lecturas.addLast(temperatura.toFloat())
+                        if (lecturas.size > MUESTRAS_HISTORIAL) lecturas.removeFirst()
+                    }
+                    revisarAlertas(temperatura)
                 }
-                revisarZona(temperatura)
                 avisar(nuevaLectura)
             } else {
                 // Sin conexión: se descarta el último estado.
                 estado = null
                 hayError = true
+                nivel = NivelTemperatura.SIN_DATOS
                 avisar(nuevaLectura = false)
             }
         }
@@ -152,11 +162,10 @@ object Placa {
         }
     }
 
-    /** Envía o retira la alerta según la zona de confort. */
-    private fun revisarZona(temperatura: Double?) {
-        if (temperatura == null) return
+    /** Envía o retira la alerta cuando cambia la zona de confort. */
+    private fun revisarAlertas(temperatura: Double) {
+        val nueva = zona ?: return
         val anterior = zonaAvisada
-        val nueva = zonaParaAlertas(temperatura, anterior)
         zonaAvisada = nueva
         if (nueva == anterior) return
 
@@ -185,9 +194,7 @@ object Placa {
             return Estado(
                 temperatura = if (json.isNull("temperatura")) null else json.getDouble("temperatura"),
                 humedad = if (json.isNull("humedad")) null else json.getDouble("humedad"),
-                ventilador = json.getBoolean("ventilador"),
-                auto = json.getBoolean("auto"),
-                objetivo = json.getDouble("objetivo"),
+                ventilador = json.optBoolean("ventilador", false),
                 alerta = json.optString("alerta", "ninguna")
             )
         } finally {

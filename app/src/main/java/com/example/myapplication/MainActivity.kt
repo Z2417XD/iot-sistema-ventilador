@@ -9,7 +9,6 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.OvershootInterpolator
 import android.view.animation.PathInterpolator
 import android.widget.Button
 import android.widget.EditText
@@ -36,22 +35,18 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvEstado: TextView
     private lateinit var tvDetalle: TextView
     private lateinit var tvHumedad: TextView
-    private lateinit var btnBajar: Button
-    private lateinit var tvObjetivo: TextView
-    private lateinit var btnSubir: Button
-    private lateinit var slObjetivo: Slider
-    private lateinit var swAuto: MaterialSwitch
     private lateinit var swVentilador: MaterialSwitch
     private lateinit var tvVentiladorEstado: TextView
     private lateinit var ventiladorIcono: VentiladorView
     private lateinit var btnVerHistorial: Button
+    private lateinit var cardSimulacion: View
+    private lateinit var slSimulacion: Slider
 
     private lateinit var prefs: SharedPreferences
     private lateinit var fondo: FondoAnimado
 
-    private var objetivoActual: Double? = null  // objetivo mostrado en pantalla
-    private var actualizandoPantalla = false    // evita que los switches reenvíen órdenes
-    private var arrastrando = false             // slider en uso
+    private var actualizandoPantalla = false    // evita que el switch reenvíe órdenes
+    private var arrastrandoBarra = false        // evita mover la barra mientras se arrastra
 
     // --- Animaciones ---
     private val suave = PathInterpolator(0.2f, 0f, 0f, 1f)   // curva de aceleración de las animaciones
@@ -91,20 +86,17 @@ class MainActivity : AppCompatActivity() {
         tvEstado = findViewById(R.id.tvEstado)
         tvDetalle = findViewById(R.id.tvDetalle)
         tvHumedad = findViewById(R.id.tvHumedad)
-        btnBajar = findViewById(R.id.btnBajar)
-        tvObjetivo = findViewById(R.id.tvObjetivo)
-        btnSubir = findViewById(R.id.btnSubir)
-        slObjetivo = findViewById(R.id.slObjetivo)
-        swAuto = findViewById(R.id.swAuto)
         swVentilador = findViewById(R.id.swVentilador)
         tvVentiladorEstado = findViewById(R.id.tvVentiladorEstado)
         ventiladorIcono = findViewById(R.id.ventiladorIcono)
         btnVerHistorial = findViewById(R.id.btnVerHistorial)
+        cardSimulacion = findViewById(R.id.cardSimulacion)
+        slSimulacion = findViewById(R.id.slSimulacion)
 
         // Conexión automática con la última IP guardada.
         prefs = getSharedPreferences("clima", MODE_PRIVATE)
         val ipGuardada = prefs.getString("ip", "") ?: ""
-        etIp.setText(if (Placa.ip.isNotBlank() && Placa.ip != IP_DEMO) Placa.ip else ipGuardada)
+        etIp.setText(if (Placa.ip.isNotBlank() && !Placa.enModoDemo) Placa.ip else ipGuardada)
         if (Placa.ip.isBlank() && ipGuardada.isNotBlank()) Placa.conectar(ipGuardada)
 
         // --- Conexión ---
@@ -113,34 +105,28 @@ class MainActivity : AppCompatActivity() {
             prefs.edit { putString("ip", ip) }
             Placa.conectar(ip)
         }
-        btnDemo.setOnClickListener { Placa.conectar(IP_DEMO) }
-
-        // --- Temperatura objetivo ---
-        btnBajar.setOnClickListener { objetivoActual?.let { cambiarObjetivo(it - 1) } }
-        btnSubir.setOnClickListener { objetivoActual?.let { cambiarObjetivo(it + 1) } }
-        slObjetivo.setLabelFormatter { valor -> getString(R.string.objetivo_valor, valor) }
-        slObjetivo.addOnChangeListener { _, valor, delUsuario ->
-            // Actualiza el número al arrastrar; la orden se envía al soltar.
-            if (delUsuario) tvObjetivo.text = getString(R.string.objetivo_valor, valor)
+        // Activa o desactiva el modo demo.
+        btnDemo.setOnClickListener {
+            Placa.conectar(if (Placa.enModoDemo) "" else IP_DEMO)
         }
-        slObjetivo.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
+
+        // --- Ventilador (control manual) ---
+        swVentilador.setOnCheckedChangeListener { _, encendido ->
+            if (!actualizandoPantalla) Placa.enviarOrden("/ventilador?on=${if (encendido) 1 else 0}")
+        }
+
+        // --- Simulación (solo modo demo) ---
+        slSimulacion.setLabelFormatter { getString(R.string.simulacion_valor, it) }
+        slSimulacion.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
             override fun onStartTrackingTouch(slider: Slider) {
-                arrastrando = true
+                arrastrandoBarra = true
             }
 
             override fun onStopTrackingTouch(slider: Slider) {
-                arrastrando = false
-                cambiarObjetivo(slider.value.toDouble())
+                arrastrandoBarra = false
+                Placa.enviarOrden("/simular?valor=${slider.value}")
             }
         })
-
-        // --- Ventilador (el control manual desactiva el modo automático en la placa) ---
-        swAuto.setOnCheckedChangeListener { _, activo ->
-            if (!actualizandoPantalla) Placa.enviarOrden("/auto?on=${if (activo) 1 else 0}")
-        }
-        swVentilador.setOnCheckedChangeListener { _, activo ->
-            if (!actualizandoPantalla) Placa.enviarOrden("/ventilador?on=${if (activo) 1 else 0}")
-        }
 
         btnVerHistorial.setOnClickListener {
             startActivity(Intent(this, HistorialActivity::class.java))
@@ -158,6 +144,7 @@ class MainActivity : AppCompatActivity() {
     // Registro en Placa mientras la pantalla está visible.
     override fun onStart() {
         super.onStart()
+        if (!Sesion.activa) return
         Placa.registrar(this, oyente)
         pintar()
     }
@@ -173,15 +160,6 @@ class MainActivity : AppCompatActivity() {
         if (::fondo.isInitialized) fondo.detener()
     }
 
-    /** Muestra el nuevo objetivo y envía la orden a la placa. */
-    private fun cambiarObjetivo(nuevo: Double) {
-        val valor = nuevo.coerceIn(OBJETIVO_MIN, OBJETIVO_MAX)
-        mostrarObjetivo(valor, conRebote = true)
-        termometro.mostrar(Placa.estado?.temperatura?.toFloat(), valor.toFloat())
-        habilitarControles(true)
-        Placa.enviarOrden("/objetivo?valor=$valor")
-    }
-
     // -----------------------------------------------------------------------
     // Pantalla
     // -----------------------------------------------------------------------
@@ -189,6 +167,8 @@ class MainActivity : AppCompatActivity() {
     /** Actualiza la pantalla con el estado actual de Placa. */
     private fun pintar() {
         tvConexion.text = textoConexion()
+        btnDemo.setText(if (Placa.enModoDemo) R.string.salir_demo else R.string.modo_demo)
+        cardSimulacion.visibility = if (Placa.enModoDemo) View.VISIBLE else View.GONE
 
         val estado = Placa.estado
         if (estado == null) {
@@ -204,15 +184,9 @@ class MainActivity : AppCompatActivity() {
         }
         tvError.visibility = View.GONE
 
+        // Estado de la habitación
         val temperatura = estado.temperatura
         val nivel = Placa.nivel
-
-        // Evita sobrescribir los controles mientras hay órdenes sin respuesta.
-        val controlesAlDia = Placa.ordenesPendientes == 0
-        if (controlesAlDia && !arrastrando) mostrarObjetivo(estado.objetivo, conRebote = false)
-        val objetivo = (objetivoActual ?: estado.objetivo).toFloat()
-
-        // Estado de la habitación
         fondo.mostrar(nivel)
         mostrarTemperatura(temperatura?.toFloat())
         cambiarTexto(
@@ -221,13 +195,13 @@ class MainActivity : AppCompatActivity() {
         )
         tvDetalle.text = detalle(temperatura)
         tvHumedad.text = estado.humedad?.let { getString(R.string.humedad_valor, it) }
-        termometro.mostrar(temperatura?.toFloat(), objetivo)
+        termometro.mostrar(temperatura?.toFloat())
+        sincronizarBarra(temperatura)
 
-        // Ventilador
-        if (controlesAlDia) {
+        // Ventilador: no se sobrescribe mientras hay órdenes sin respuesta.
+        if (Placa.ordenesPendientes == 0) {
             // La bandera evita que el listener reenvíe la orden.
             actualizandoPantalla = true
-            swAuto.isChecked = estado.auto
             swVentilador.isChecked = estado.ventilador
             actualizandoPantalla = false
         }
@@ -235,14 +209,21 @@ class MainActivity : AppCompatActivity() {
             if (estado.ventilador) R.string.ventilador_encendido else R.string.ventilador_apagado
         )
         ventiladorIcono.encender(estado.ventilador)
+        swVentilador.isEnabled = true
+    }
 
-        habilitarControles(true)
+    /** Lleva la barra de simulación a la temperatura actual, salvo mientras se arrastra. */
+    private fun sincronizarBarra(temperatura: Double?) {
+        if (!Placa.enModoDemo || temperatura == null) return
+        if (arrastrandoBarra || Placa.ordenesPendientes > 0) return
+        slSimulacion.value = temperatura.roundToInt().toDouble()
+            .coerceIn(SIMULACION_MIN, SIMULACION_MAX).toFloat()
     }
 
     /** Texto del estado de la conexión. */
     private fun textoConexion(): String = when {
         Placa.ip.isBlank() -> getString(R.string.conexion_escribe_ip)
-        Placa.ip == IP_DEMO -> getString(R.string.conexion_demo)
+        Placa.enModoDemo -> getString(R.string.conexion_demo)
         Placa.hayError -> getString(R.string.conexion_sin)
         Placa.estado == null -> getString(R.string.conexion_conectando, Placa.ip)
         else -> getString(R.string.conexion_conectado, Placa.ip)
@@ -251,61 +232,31 @@ class MainActivity : AppCompatActivity() {
     /** Texto de la posición de la temperatura respecto a la zona de confort. */
     private fun detalle(temperatura: Double?): String {
         if (temperatura == null) return getString(R.string.detalle_sensor)
-        return when (zonaDe(temperatura)) {
-            Zona.SOBRE -> getString(R.string.detalle_sobre, temperatura - CONFORT_MAX)
-            Zona.BAJO -> getString(R.string.detalle_bajo, CONFORT_MIN - temperatura)
-            Zona.CONFORT -> getString(R.string.detalle_confort, CONFORT_MIN, CONFORT_MAX)
+        return when (Placa.zona) {
+            Zona.SOBRE ->
+                if (temperatura > CONFORT_MAX) getString(R.string.detalle_sobre, temperatura - CONFORT_MAX)
+                else getString(R.string.detalle_limite)
+            Zona.BAJO ->
+                if (temperatura < CONFORT_MIN) getString(R.string.detalle_bajo, CONFORT_MIN - temperatura)
+                else getString(R.string.detalle_limite)
+            else -> getString(R.string.detalle_confort, CONFORT_MIN, CONFORT_MAX)
         }
     }
 
     /** Muestra la pantalla sin datos de la placa. */
     private fun mostrarSinDatos() {
-        objetivoActual = null
         fondo.mostrar(NivelTemperatura.SIN_DATOS)
         mostrarTemperatura(null)
         cambiarTexto(tvEstado, getString(NivelTemperatura.SIN_DATOS.titulo))
         tvDetalle.setText(R.string.detalle_conectate)
         tvHumedad.text = null
-        tvObjetivo.setText(R.string.sin_valor)
         tvVentiladorEstado.setText(R.string.sin_datos)
         ventiladorIcono.encender(false)
-        termometro.mostrar(null, null)
-        habilitarControles(false)
-    }
-
-    /** Muestra el objetivo en el número y el slider. */
-    private fun mostrarObjetivo(valor: Double, conRebote: Boolean) {
-        objetivoActual = valor
-        val texto = getString(R.string.objetivo_valor, valor)
-        if (tvObjetivo.text.toString() != texto) {
-            tvObjetivo.text = texto
-            if (conRebote) {
-                // Animación de rebote al cambiar el valor.
-                tvObjetivo.animate().cancel()
-                tvObjetivo.scaleX = 1.2f
-                tvObjetivo.scaleY = 1.2f
-                tvObjetivo.animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(320L)
-                    .setInterpolator(OvershootInterpolator())
-                    .start()
-            }
-        }
-        val enSlider = valor.roundToInt()
-            .coerceIn(OBJETIVO_MIN.toInt(), OBJETIVO_MAX.toInt())
-            .toFloat()
-        if (slObjetivo.value != enSlider) slObjetivo.value = enSlider
-    }
-
-    /** Activa o desactiva los controles según la conexión. */
-    private fun habilitarControles(conectado: Boolean) {
-        val objetivo = objetivoActual
-        btnBajar.isEnabled = conectado && objetivo != null && objetivo > OBJETIVO_MIN
-        btnSubir.isEnabled = conectado && objetivo != null && objetivo < OBJETIVO_MAX
-        slObjetivo.isEnabled = conectado
-        swAuto.isEnabled = conectado
-        swVentilador.isEnabled = conectado
+        termometro.mostrar(null)
+        actualizandoPantalla = true
+        swVentilador.isChecked = false
+        actualizandoPantalla = false
+        swVentilador.isEnabled = false
     }
 
     // -----------------------------------------------------------------------
@@ -337,9 +288,11 @@ class MainActivity : AppCompatActivity() {
         animacionTemperatura = animacion
     }
 
-    /** Cambia un texto con un fundido. */
+    /** Cambia un texto con un fundido; el tag guarda el texto de destino. */
     private fun cambiarTexto(vista: TextView, texto: String) {
-        if (vista.text.toString() == texto) return
+        val destino = (vista.tag as? String) ?: vista.text.toString()
+        if (destino == texto) return
+        vista.tag = texto
         vista.animate().cancel()
         vista.animate()
             .alpha(0f)

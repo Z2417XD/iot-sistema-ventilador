@@ -1,6 +1,7 @@
 package com.example.myapplication
 
 import androidx.annotation.StringRes
+import kotlin.math.abs
 
 // ---------------------------------------------------------------------------
 // Constantes de temperatura usadas por el indicador, el gráfico, los colores y las alertas.
@@ -14,12 +15,8 @@ const val CONFORT_MAX = 25.0
 const val FRIO_EXTREMO = 14.0
 const val CALOR_EXTREMO = 30.0
 
-/** Margen en °C para dar por terminada una alerta; evita avisos repetidos en el límite. */
-const val MARGEN_ALERTA = 0.5
-
-/** Límites de la temperatura objetivo en °C. */
-const val OBJETIVO_MIN = 10.0
-const val OBJETIVO_MAX = 40.0
+/** Margen en °C para volver hacia la zona de confort; evita cambios repetidos en los límites. */
+const val MARGEN_NIVEL = 0.5
 
 /** Cantidad de lecturas del historial (150 lecturas cada 2 s = 5 minutos). */
 const val MUESTRAS_HISTORIAL = 150
@@ -32,8 +29,6 @@ data class Estado(
     val temperatura: Double?,   // °C; null si el sensor no entregó lectura
     val humedad: Double?,
     val ventilador: Boolean,    // true = ventilador encendido
-    val auto: Boolean,          // true = control automático según el objetivo
-    val objetivo: Double,       // temperatura deseada en °C
     val alerta: String          // "alta", "baja" o "ninguna"
 )
 
@@ -54,25 +49,6 @@ enum class NivelTemperatura(
     MUY_CALIENTE(R.string.nivel_muy_caliente, 0xFFC62828.toInt(), 0xFF5A0E14.toInt())   // rojo
 }
 
-/** Zona de confort que corresponde a una temperatura. */
-fun zonaDe(temperatura: Double): Zona = when {
-    temperatura < CONFORT_MIN -> Zona.BAJO
-    temperatura > CONFORT_MAX -> Zona.SOBRE
-    else -> Zona.CONFORT
-}
-
-/** Zona usada para las alertas; aplica MARGEN_ALERTA al volver a la zona de confort. */
-fun zonaParaAlertas(temperatura: Double, anterior: Zona?): Zona {
-    val exacta = zonaDe(temperatura)
-    return when {
-        anterior == Zona.SOBRE && exacta == Zona.CONFORT &&
-            temperatura > CONFORT_MAX - MARGEN_ALERTA -> Zona.SOBRE
-        anterior == Zona.BAJO && exacta == Zona.CONFORT &&
-            temperatura < CONFORT_MIN + MARGEN_ALERTA -> Zona.BAJO
-        else -> exacta
-    }
-}
-
 /** Nivel (texto y color) que corresponde a una temperatura. */
 fun nivelDe(temperatura: Double?): NivelTemperatura = when {
     temperatura == null -> NivelTemperatura.SIN_DATOS
@@ -81,4 +57,31 @@ fun nivelDe(temperatura: Double?): NivelTemperatura = when {
     temperatura <= CONFORT_MAX -> NivelTemperatura.AGRADABLE
     temperatura <= CALOR_EXTREMO -> NivelTemperatura.CALUROSA
     else -> NivelTemperatura.MUY_CALIENTE
+}
+
+/**
+ * Nivel con margen: alejarse de la zona de confort cambia el nivel de inmediato;
+ * acercarse exige pasar el límite por MARGEN_NIVEL grados.
+ */
+fun nivelConMargen(temperatura: Double, anterior: NivelTemperatura): NivelTemperatura {
+    val exacto = nivelDe(temperatura)
+    if (anterior == NivelTemperatura.SIN_DATOS) return exacto
+
+    val confort = NivelTemperatura.AGRADABLE.ordinal
+    val haciaConfort = abs(exacto.ordinal - confort) < abs(anterior.ordinal - confort)
+    if (!haciaConfort) return exacto
+
+    return if (anterior.ordinal > confort) {
+        nivelDe(temperatura + MARGEN_NIVEL)     // desde los niveles calurosos
+    } else {
+        nivelDe(temperatura - MARGEN_NIVEL)     // desde los niveles fríos
+    }
+}
+
+/** Zona de confort que corresponde a un nivel, o null sin datos. */
+fun zonaDe(nivel: NivelTemperatura): Zona? = when (nivel) {
+    NivelTemperatura.SIN_DATOS -> null
+    NivelTemperatura.FRIA, NivelTemperatura.FRESCA -> Zona.BAJO
+    NivelTemperatura.AGRADABLE -> Zona.CONFORT
+    NivelTemperatura.CALUROSA, NivelTemperatura.MUY_CALIENTE -> Zona.SOBRE
 }

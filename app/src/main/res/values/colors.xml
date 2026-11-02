@@ -13,6 +13,4 @@
     <color name="tinta">#FF10202B</color>             <!-- texto sobre botones blancos -->
     <color name="aviso">#FFFFD54F</color>             <!-- mensajes de error -->
     <color name="fondo_inicial">#FF1B2529</color>     <!-- fondo de la ventana al abrir la app -->
-    <color name="escala_frio">#FFB3E5FC</color>       <!-- texto "10 °C (frío)" bajo el slider -->
-    <color name="escala_calor">#FFFFCCBC</color>      <!-- texto "(caliente) 40 °C" bajo el slider -->
 </resources>

@@ -32,7 +32,7 @@ fun calcularMetricas(temperaturas: List<Float>): Metricas? {
  * Campos:
  *   fecha, usuario, origen ("placa" o "demo"), dispositivo (IP), lecturas,
  *   temp_min, temp_max, temp_promedio, pct_confort, confort_min, confort_max,
- *   objetivo, humedad, ventilador, modo_auto
+ *   humedad, ventilador
  */
 fun guardarMetricas(metricas: Metricas, estado: Estado?, alTerminar: (Boolean) -> Unit) {
     val documento = hashMapOf(
@@ -47,10 +47,8 @@ fun guardarMetricas(metricas: Metricas, estado: Estado?, alTerminar: (Boolean) -
         "pct_confort" to metricas.porcentajeConfort,
         "confort_min" to CONFORT_MIN,
         "confort_max" to CONFORT_MAX,
-        "objetivo" to estado?.objetivo,
         "humedad" to estado?.humedad,
-        "ventilador" to estado?.ventilador,
-        "modo_auto" to estado?.auto
+        "ventilador" to estado?.ventilador
     )
 
     FirebaseFirestore.getInstance()

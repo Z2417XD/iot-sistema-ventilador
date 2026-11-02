@@ -3,9 +3,9 @@
 
 Proyecto de Aplicaciones Móviles para IoT (TI3042), evaluación sumativa de la Unidad 2.
 
-Es una app Android que se conecta por WiFi a una placa Arduino UNO R4 WiFi. La placa mide la temperatura y la humedad de una pieza con un sensor DHT11, y desde el celular se puede ver esa información, cambiar la temperatura que uno quiere y prender o apagar un ventilador. Como no tengo un ventilador de verdad conectado, usé un micro servo SG90 que se mueve de un lado a otro cuando el ventilador está encendido.
+Es una app Android que se conecta por WiFi a una placa Arduino UNO R4 WiFi. La placa mide la temperatura y la humedad de una pieza con un sensor DHT11, y desde el celular se puede ver esa información y prender o apagar un ventilador a mano. Como no tengo un ventilador de verdad conectado, usé un micro servo SG90 que se mueve de un lado a otro cuando el ventilador está encendido.
 
-Además, si la temperatura se sale de lo cómodo (menos de 17 °C o más de 25 °C), la app manda una notificación al celular.
+Además, si la temperatura se sale de lo cómodo (menos de 17 °C o más de 25 °C), la app manda una notificación al celular. Con esa alerta uno decide: prende el ventilador para que la temperatura baje o lo apaga para que suba.
 
 ## Qué se necesita
 
@@ -42,15 +42,13 @@ La placa funciona como un pequeño servidor web en el puerto 80. La app le pide 
 
 | Ruta | Qué hace |
 |---|---|
-| `/estado` | Devuelve temperatura, humedad, estado del ventilador, modo automático, objetivo y alerta. |
-| `/objetivo?valor=24.0` | Cambia la temperatura objetivo (entre 10 y 40 °C). |
-| `/auto?on=1` o `on=0` | Activa o desactiva el modo automático. |
-| `/ventilador?on=1` o `on=0` | Prende o apaga el ventilador a mano. Esto desactiva el modo automático. |
+| `/estado` | Devuelve temperatura, humedad, estado del ventilador y alerta. |
+| `/ventilador?on=1` o `on=0` | Prende o apaga el ventilador. |
 
 Un ejemplo de respuesta:
 
 ```json
-{"temperatura":23.0,"humedad":55,"ventilador":false,"auto":true,"objetivo":24.0,"alerta":"ninguna"}
+{"temperatura":23.0,"humedad":55,"ventilador":false,"alerta":"ninguna"}
 ```
 
 La app pregunta por `/estado` cada 2 segundos. Si la placa no contesta en 3 segundos, muestra que se perdió la conexión y sigue intentando. Por el lado de la placa, cada 10 segundos revisa si sigue conectada al WiFi y, si se cayó, se reconecta sola.
@@ -65,11 +63,11 @@ Como el hotspot reparte las IP automáticamente, **la IP puede cambiar** cada ve
 
 Al abrir la app aparece primero el login. Después de entrar hay dos pantallas.
 
-La pantalla principal tiene el campo para escribir la IP, el termómetro, la humedad, los botones y el deslizador para cambiar la temperatura objetivo, y los interruptores del ventilador y del modo automático. El fondo cambia de color según qué tan fría o caliente esté la pieza.
+La pantalla principal tiene el campo para escribir la IP, el termómetro con la zona de confort marcada, la humedad y el interruptor del ventilador. El fondo cambia de color según qué tan fría o caliente esté la pieza.
 
 La pantalla de historial muestra los parámetros en tiempo real, un gráfico con los últimos 5 minutos de temperatura y unas métricas calculadas con esos datos (mínima, máxima, promedio y el porcentaje de tiempo dentro de la zona de confort). Desde ahí se pueden guardar las métricas en la nube.
 
-También tiene un modo demo, que simula la placa dentro del mismo celular. Lo agregué para poder probar la app sin tener el Arduino a mano.
+También tiene un modo demo, que simula la placa dentro del mismo celular. Lo agregué para poder probar la app sin tener el Arduino a mano. En el modo demo aparece una barra para fijar la temperatura simulada (de 5 a 40 °C), así se pueden probar rápido las temperaturas bajas y altas con sus colores y alertas. El mismo botón sirve para salir del modo demo.
 
 ## Inicio de sesión
 
@@ -101,10 +99,8 @@ Firestore no trabaja con tablas sino con colecciones de documentos. Acá hay una
 | `pct_confort` | decimal | Porcentaje de lecturas dentro de la zona de confort. |
 | `confort_min` | decimal | Límite inferior de la zona de confort (17 °C). |
 | `confort_max` | decimal | Límite superior de la zona de confort (25 °C). |
-| `objetivo` | decimal | Temperatura objetivo al momento de guardar. |
 | `humedad` | decimal | Humedad al momento de guardar (%). |
 | `ventilador` | booleano | Si el ventilador estaba encendido. |
-| `modo_auto` | booleano | Si el modo automático estaba activado. |
 
 Las reglas de Firestore piden un usuario autenticado para escribir. Por eso, justo después de validar el login, la app abre una sesión anónima de Firebase.
 
@@ -117,9 +113,9 @@ Con la placa:
 3. Probar en el navegador del celular `http://IP_DE_LA_PLACA/estado`. Si todo va bien, devuelve el JSON.
 4. Abrir la app, entrar con `admin` y `1234`, escribir la IP y tocar **Conectar**.
 
-Sin la placa, basta con tocar **Modo demo** en la pantalla principal.
+Sin la placa, basta con tocar **Modo demo** en la pantalla principal y mover la barra de simulación.
 
-Mientras se prueba, conviene revisar que el login rechace una clave incorrecta, que el servo se mueva al prender el ventilador, que llegue la notificación cuando la temperatura pasa de 25 °C (por ejemplo, acercando la mano al sensor) y que al tocar **Guardar métricas** aparezca un documento nuevo en la colección `metricas` de la consola de Firebase.
+Mientras se prueba, conviene revisar que el login rechace una clave incorrecta, que el servo se mueva al prender el ventilador, que llegue la notificación cuando la temperatura pasa de 25 °C (por ejemplo, acercando la mano al sensor) y que al tocar **Guardar en Firebase** aparezca un documento nuevo en la colección `metricas` de la consola de Firebase.
 
 ## Lo que falta
 

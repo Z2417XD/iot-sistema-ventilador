@@ -15,7 +15,7 @@ import android.view.View
 import android.view.animation.PathInterpolator
 import java.util.Locale
 
-/** Gráfico de las últimas temperaturas, con la zona de confort (franja) y el objetivo (línea punteada). */
+/** Gráfico de las últimas temperaturas, con la zona de confort (franja y límites punteados). */
 class HistorialView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
@@ -36,7 +36,7 @@ class HistorialView @JvmOverloads constructor(
         style = Paint.Style.FILL
         color = Color.WHITE
     }
-    private val lineaObjetivo = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val lineaLimite = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         color = Color.argb(150, 255, 255, 255)
     }
@@ -55,7 +55,6 @@ class HistorialView @JvmOverloads constructor(
     private val suave = PathInterpolator(0.2f, 0f, 0f, 1f)
 
     private var datos: List<Float> = emptyList()
-    private var objetivo: Float? = null
 
     // Valores animados
     private var escalaLista = false
@@ -66,17 +65,16 @@ class HistorialView @JvmOverloads constructor(
 
     init {
         linea.strokeWidth = 2.5f * densidad
-        lineaObjetivo.strokeWidth = 1.5f * densidad
-        lineaObjetivo.pathEffect = DashPathEffect(floatArrayOf(6f * densidad, 4f * densidad), 0f)
+        lineaLimite.strokeWidth = 1.5f * densidad
+        lineaLimite.pathEffect = DashPathEffect(floatArrayOf(6f * densidad, 4f * densidad), 0f)
         texto.textSize = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_SP, 12f, resources.displayMetrics
         )
     }
 
     /** Actualiza el gráfico; nuevaLectura activa el desplazamiento de la curva. */
-    fun mostrar(datos: List<Float>, objetivo: Float?, nuevaLectura: Boolean) {
+    fun mostrar(datos: List<Float>, nuevaLectura: Boolean) {
         this.datos = datos
-        this.objetivo = objetivo
         animador?.cancel()
 
         if (datos.size < 2) {
@@ -86,16 +84,12 @@ class HistorialView @JvmOverloads constructor(
             return
         }
 
-        // Escala vertical: lecturas, objetivo y zona de confort, con 1 °C de margen.
+        // Escala vertical: lecturas y zona de confort, con 1 °C de margen.
         var minimo = minOf(datos[0], CONFORT_MIN.toFloat())
         var maximo = maxOf(datos[0], CONFORT_MAX.toFloat())
         for (valor in datos) {
             if (valor < minimo) minimo = valor
             if (valor > maximo) maximo = valor
-        }
-        if (objetivo != null) {
-            if (objetivo < minimo) minimo = objetivo
-            if (objetivo > maximo) maximo = objetivo
         }
         val minimoDestino = minimo - 1f
         val maximoDestino = maximo + 1f
@@ -196,14 +190,14 @@ class HistorialView @JvmOverloads constructor(
         canvas.drawCircle(xAnterior, yAnterior, 4.5f * densidad, punto)
         canvas.restore()
 
-        val meta = objetivo
-        if (meta != null) {
-            val y = abajo - (meta - minimoMostrado) / rango * alto
-            guia.reset()
+        // Límites de la zona de confort (líneas punteadas)
+        guia.reset()
+        for (limite in listOf(CONFORT_MIN.toFloat(), CONFORT_MAX.toFloat())) {
+            val y = abajo - (limite - minimoMostrado) / rango * alto
             guia.moveTo(izquierda, y)
             guia.lineTo(derecha, y)
-            canvas.drawPath(guia, lineaObjetivo)
         }
+        canvas.drawPath(guia, lineaLimite)
 
         texto.textAlign = Paint.Align.LEFT
         canvas.drawText(etiqueta(maximoMostrado), 0f, arriba + texto.textSize * 0.4f, texto)

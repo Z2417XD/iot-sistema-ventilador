@@ -3,37 +3,41 @@ package com.example.myapplication
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
+private const val TEMPERATURA_INICIAL = 23.0
+private const val ENFRIAMIENTO_VENTILADOR = 10.0       // °C que el ventilador baja respecto al ambiente
+private const val RAPIDEZ = 0.04                       // fracción de cambio por consulta
+const val SIMULACION_MIN = 5.0                         // rango de la barra de simulación, en °C
+const val SIMULACION_MAX = 40.0
+
 /**
  * Placa simulada para pruebas sin el Arduino (botón "Modo demo").
- * Responde las mismas rutas que el sketch: /estado, /objetivo, /auto y /ventilador.
- * Rango simulado: ~12 °C con el ventilador encendido y ~33 °C con el ventilador apagado.
+ * Responde las mismas rutas que el sketch (/estado y /ventilador) y además
+ * /simular?valor=X, que fija la temperatura de la habitación simulada.
  */
 class PlacaDemo {
 
-    private var temperatura = 23.0
-    private var objetivo = 24.0
-    private var auto = true
+    private var temperatura = TEMPERATURA_INICIAL
+    private var ambiente = TEMPERATURA_INICIAL         // temperatura hacia la que tiende la habitación
     private var ventilador = false
 
+    /** Vuelve la simulación al estado inicial. */
+    fun reiniciar() {
+        temperatura = TEMPERATURA_INICIAL
+        ambiente = TEMPERATURA_INICIAL
+        ventilador = false
+    }
+
+    /** Responde una petición igual que la placa. */
     fun atender(ruta: String): Estado {
         val valor = ruta.substringAfter('=', "")
-
-        if (ruta.startsWith("/objetivo")) {
-            val nuevo = valor.toDoubleOrNull()
-            if (nuevo != null) objetivo = nuevo.coerceIn(OBJETIVO_MIN, OBJETIVO_MAX)
-        } else if (ruta.startsWith("/auto")) {
-            auto = valor == "1"
-        } else if (ruta.startsWith("/ventilador")) {
-            ventilador = valor == "1"
-            auto = false
-        } else {
-            avanzar()       // avanza la simulación en cada consulta de /estado
-        }
-
-        // Misma lógica que controlAutomatico() del sketch
-        if (auto) {
-            if (temperatura >= objetivo + 0.5) ventilador = true
-            if (temperatura <= objetivo - 0.5) ventilador = false
+        when {
+            ruta.startsWith("/ventilador") -> ventilador = valor == "1"
+            ruta.startsWith("/simular") -> valor.toDoubleOrNull()?.let {
+                val fijada = it.coerceIn(SIMULACION_MIN, SIMULACION_MAX)
+                temperatura = fijada
+                ambiente = fijada
+            }
+            else -> avanzar()       // avanza la simulación en cada consulta de /estado
         }
 
         // Misma lógica que alerta() del sketch
@@ -47,15 +51,13 @@ class PlacaDemo {
             temperatura = (temperatura * 10).roundToInt() / 10.0,
             humedad = 55.0,
             ventilador = ventilador,
-            auto = auto,
-            objetivo = objetivo,
             alerta = alerta
         )
     }
 
-    /** Simula el cambio de temperatura de la habitación. */
+    /** Simula el cambio de temperatura: tiende al ambiente, o por debajo con el ventilador encendido. */
     private fun avanzar() {
-        val destino = if (ventilador) 12.0 else 33.0
-        temperatura += (destino - temperatura) * 0.03 + Random.nextDouble(-0.05, 0.05)
+        val destino = if (ventilador) ambiente - ENFRIAMIENTO_VENTILADOR else ambiente
+        temperatura += (destino - temperatura) * RAPIDEZ + Random.nextDouble(-0.05, 0.05)
     }
 }

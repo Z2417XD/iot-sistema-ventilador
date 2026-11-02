@@ -75,17 +75,15 @@ class HistorialActivity : AppCompatActivity() {
                 else getString(R.string.sin_valor),
                 if (humedad != null) getString(R.string.historial_humedad, humedad)
                 else getString(R.string.sin_valor),
-                getString(R.string.objetivo_valor, estado.objetivo),
                 getString(
                     if (estado.ventilador) R.string.ventilador_encendido
                     else R.string.ventilador_apagado
                 ),
-                getString(if (estado.auto) R.string.activado else R.string.desactivado),
                 getString(textoZona(Placa.zona))
             )
         }
 
-        grafico.mostrar(Placa.historial, estado?.objetivo?.toFloat(), nuevaLectura)
+        grafico.mostrar(Placa.historial, nuevaLectura)
         pintarMetricas()
     }
 

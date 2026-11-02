@@ -19,8 +19,8 @@ private const val ANGULO_INICIO = 150f     // ángulo inicial del arco (abertura
 private const val ANGULO_BARRIDO = 240f
 
 /**
- * Indicador circular de temperatura: arco de la temperatura actual, franja de la
- * zona de confort con sus límites y punto de la temperatura objetivo.
+ * Indicador circular de temperatura: arco de la temperatura actual y franja de la
+ * zona de confort con sus límites.
  */
 class TermometroView @JvmOverloads constructor(
     context: Context,
@@ -47,14 +47,6 @@ class TermometroView @JvmOverloads constructor(
         strokeCap = Paint.Cap.ROUND
         color = Color.WHITE
     }
-    private val marcaBorde = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.FILL
-        color = Color.WHITE
-    }
-    private val marcaCentro = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.FILL
-        color = Color.argb(150, 0, 0, 0)
-    }
     private val etiqueta = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.argb(200, 255, 255, 255)
         textAlign = Paint.Align.CENTER
@@ -71,36 +63,25 @@ class TermometroView @JvmOverloads constructor(
 
     private var hayLectura = false
     private var fraccionMostrada = 0f          // 0 = ESCALA_MIN, 1 = ESCALA_MAX
-    private var fraccionObjetivo: Float? = null
     private var animador: ValueAnimator? = null
 
     /** Actualiza el indicador. Con temperatura null se muestra vacío. */
-    fun mostrar(temperatura: Float?, objetivo: Float?) {
-        val destinoTemperatura = if (temperatura != null) fraccion(temperatura) else 0f
-        val destinoObjetivo = if (objetivo != null) fraccion(objetivo) else null
-        val desdeTemperatura = fraccionMostrada
-        // Primera vez: el punto del objetivo se ubica sin animación.
-        val desdeObjetivo = fraccionObjetivo ?: destinoObjetivo
+    fun mostrar(temperatura: Float?) {
+        val destino = if (temperatura != null) fraccion(temperatura) else 0f
+        val desde = fraccionMostrada
 
         hayLectura = temperatura != null
         animador?.cancel()
-        if (destinoObjetivo == null) fraccionObjetivo = null
-
-        if (desdeTemperatura == destinoTemperatura && desdeObjetivo == destinoObjetivo) {
-            fraccionObjetivo = destinoObjetivo
+        if (desde == destino) {
             invalidate()
             return
         }
 
-        val animacion = ValueAnimator.ofFloat(0f, 1f)
+        val animacion = ValueAnimator.ofFloat(desde, destino)
         animacion.duration = 900L
         animacion.interpolator = suave
         animacion.addUpdateListener {
-            val avance = it.animatedFraction
-            fraccionMostrada = desdeTemperatura + (destinoTemperatura - desdeTemperatura) * avance
-            if (desdeObjetivo != null && destinoObjetivo != null) {
-                fraccionObjetivo = desdeObjetivo + (destinoObjetivo - desdeObjetivo) * avance
-            }
+            fraccionMostrada = it.animatedValue as Float
             invalidate()
         }
         animacion.start()
@@ -154,17 +135,7 @@ class TermometroView @JvmOverloads constructor(
         dibujarLimite(canvas, fraccionConfortMin, textoConfortMin, centroX, centroY, radio, grosor)
         dibujarLimite(canvas, fraccionConfortMax, textoConfortMax, centroX, centroY, radio, grosor)
 
-        // 4. Punto de la temperatura objetivo
-        val objetivo = fraccionObjetivo
-        if (objetivo != null) {
-            val angulo = Math.toRadians((ANGULO_INICIO + ANGULO_BARRIDO * objetivo).toDouble())
-            val x = centroX + radio * cos(angulo).toFloat()
-            val y = centroY + radio * sin(angulo).toFloat()
-            canvas.drawCircle(x, y, grosor * 0.95f, marcaBorde)
-            canvas.drawCircle(x, y, grosor * 0.55f, marcaCentro)
-        }
-
-        // 5. Extremos de la escala
+        // 4. Extremos de la escala
         val anguloInicio = Math.toRadians(ANGULO_INICIO.toDouble())
         val anguloFin = Math.toRadians((ANGULO_INICIO + ANGULO_BARRIDO).toDouble())
         val yTexto = centroY + radio * sin(anguloInicio).toFloat() + grosor + etiqueta.textSize

@@ -166,76 +166,46 @@
                 android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- ============ Temperatura objetivo ============ -->
+        <!-- ============ Simulación (visible solo en modo demo) ============ -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardSimulacion"
             style="@style/TarjetaVidrio"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp">
+            android:layout_marginTop="16dp"
+            android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- labelFor: título del slider para el lector de pantalla -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:labelFor="@id/slObjetivo"
-                    android:text="@string/objetivo_titulo"
-                    android:textAppearance="?attr/textAppearanceLabelLarge"
-                    android:textColor="@color/blanco_suave" />
+                    android:text="@string/simulacion_titulo"
+                    android:textColor="@color/blanco"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
-                <LinearLayout
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:layout_marginTop="2dp"
+                    android:text="@string/simulacion_ayuda"
+                    android:textColor="@color/blanco_suave"
+                    android:textSize="13sp" />
 
-                    <Button
-                        android:id="@+id/btnBajar"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:contentDescription="@string/desc_bajar"
-                        android:text="@string/bajar"
-                        android:textSize="24sp" />
-
-                    <TextView
-                        android:id="@+id/tvObjetivo"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="24dp"
-                        android:layout_marginEnd="24dp"
-                        android:fontFeatureSettings="tnum"
-                        android:text="@string/sin_valor"
-                        android:textColor="@color/blanco"
-                        android:textSize="34sp"
-                        android:textStyle="bold" />
-
-                    <Button
-                        android:id="@+id/btnSubir"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:contentDescription="@string/desc_subir"
-                        android:text="@string/subir"
-                        android:textSize="24sp" />
-                </LinearLayout>
-
-                <!-- Límites iguales a OBJETIVO_MIN / OBJETIVO_MAX de Clima.kt -->
                 <com.google.android.material.slider.Slider
-                    android:id="@+id/slObjetivo"
+                    android:id="@+id/slSimulacion"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="4dp"
+                    android:contentDescription="@string/desc_simulacion"
                     android:stepSize="1"
-                    android:value="24"
-                    android:valueFrom="10"
+                    android:value="23"
+                    android:valueFrom="5"
                     android:valueTo="40"
                     app:tickVisible="false"
                     app:trackColorInactive="@color/vidrio_fuerte" />
@@ -249,21 +219,21 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="@string/escala_min"
-                        android:textAppearance="?attr/textAppearanceBodySmall"
-                        android:textColor="@color/escala_frio" />
+                        android:text="@string/simulacion_min"
+                        android:textColor="@color/blanco_tenue"
+                        android:textSize="12sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/escala_max"
-                        android:textAppearance="?attr/textAppearanceBodySmall"
-                        android:textColor="@color/escala_calor" />
+                        android:text="@string/simulacion_max"
+                        android:textColor="@color/blanco_tenue"
+                        android:textSize="12sp" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- ============ Ventilador ============ -->
+        <!-- ============ Ventilador (control manual) ============ -->
         <com.google.android.material.card.MaterialCardView
             style="@style/TarjetaVidrio"
             android:layout_width="match_parent"
@@ -320,41 +290,13 @@
                         android:contentDescription="@string/desc_switch_ventilador" />
                 </LinearLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/modo_auto"
-                            android:textAppearance="?attr/textAppearanceBodyLarge"
-                            android:textColor="@color/blanco" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/modo_auto_ayuda"
-                            android:textAppearance="?attr/textAppearanceBodySmall"
-                            android:textColor="@color/blanco_suave" />
-                    </LinearLayout>
-
-                    <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/swAuto"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:contentDescription="@string/desc_switch_auto" />
-                </LinearLayout>
+                    android:layout_marginTop="8dp"
+                    android:text="@string/ventilador_ayuda"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="@color/blanco_suave" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
