@@ -5,7 +5,6 @@
 //
 // CONEXIONES
 //   DHT11  (módulo de 3 pines)   VCC -> 5V   |  GND -> GND  |  DATA -> D2
-//          (sensor suelto de 4 pines: además una resistencia de 10 kΩ entre DATA y 5V)
 //   SG90   cable rojo -> 5V      |  café/negro -> GND         |  naranjo/amarillo -> D9
 //
 // LIBRERÍAS (Arduino IDE > Herramientas > Administrar bibliotecas)
