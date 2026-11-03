@@ -8,8 +8,7 @@
 
     <!-- Pantalla principal -->
     <string name="titulo_principal">Control de clima</string>
-    <string name="hint_ip">IP de la placa</string>
-    <string name="conectar">Conectar</string>
+    <string name="conectar">Conectar con la placa</string>
     <string name="modo_demo">Modo demo</string>
     <string name="salir_demo">Salir del modo demo</string>
     <string name="simulacion_titulo">Simulación (modo demo)</string>
@@ -18,12 +17,12 @@
     <string name="simulacion_min">5 °C</string>
     <string name="simulacion_max">40 °C</string>
     <string name="desc_simulacion">Temperatura simulada</string>
-    <string name="conexion_escribe_ip">Escribe la IP de la placa o prueba el modo demo</string>
+    <string name="conexion_inicio">Conecta el celular a la red %1$s y toca Conectar con la placa</string>
     <string name="conexion_demo">Modo demo: datos simulados</string>
-    <string name="conexion_conectando">Conectando con %1$s…</string>
-    <string name="conexion_conectado">Conectado a %1$s</string>
+    <string name="conexion_conectando">Conectando con la placa…</string>
+    <string name="conexion_conectado">Conectado a la placa</string>
     <string name="conexion_sin">Sin conexión</string>
-    <string name="error_conexion">No se pudo conectar con la placa (%1$s)</string>
+    <string name="error_conexion">No se pudo conectar con la placa. Revisa que el celular esté conectado a la red %1$s.</string>
 
     <string name="temperatura_ambiental">Temperatura ambiental</string>
     <string name="temperatura_valor">%1$.1f°</string>

@@ -1,6 +1,9 @@
 package com.example.myapplication
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -183,9 +186,20 @@ object Placa {
         for (oyente in oyentes.toList()) oyente(nuevaLectura)
     }
 
+    /** Red WiFi a la que está conectado el celular, o null si no hay ninguna. */
+    @Suppress("DEPRECATION")    // allNetworks: lista simple de redes, disponible desde Android 5
+    private fun redWifi(): Network? {
+        val gestor = contexto?.get()?.getSystemService(ConnectivityManager::class.java) ?: return null
+        return gestor.allNetworks.firstOrNull {
+            gestor.getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+        }
+    }
+
     /** Petición HTTP GET a la placa y lectura del JSON de respuesta. */
     private fun descargar(ip: String, ruta: String): Estado {
-        val conexion = URL("http://$ip$ruta").openConnection() as HttpURLConnection
+        val url = URL("http://$ip$ruta")
+        // Por la red WiFi de la placa, aunque el celular tenga datos móviles activos.
+        val conexion = (redWifi()?.openConnection(url) ?: url.openConnection()) as HttpURLConnection
         try {
             conexion.connectTimeout = 3000
             conexion.readTimeout = 3000

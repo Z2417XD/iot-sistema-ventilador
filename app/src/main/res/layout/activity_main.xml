@@ -28,40 +28,12 @@
             android:textColor="@color/blanco" />
 
         <!-- ============ Conexión ============ -->
-        <LinearLayout
+        <Button
+            android:id="@+id/btnConectar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:hint="@string/hint_ip">
-
-                <!-- maxWidth: ancho máximo del campo en tablets -->
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etIp"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:imeOptions="actionDone"
-                    android:importantForAutofill="no"
-                    android:inputType="textUri"
-                    android:maxWidth="488dp"
-                    android:maxLines="1"
-                    android:textColor="@color/blanco" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <Button
-                android:id="@+id/btnConectar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="@string/conectar" />
-        </LinearLayout>
+            android:text="@string/conectar" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -74,7 +46,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/conexion_escribe_ip"
+                android:text="@string/conexion_inicio"
                 android:textAppearance="?attr/textAppearanceBodySmall"
                 android:textColor="@color/blanco" />
 

@@ -3,7 +3,6 @@ package com.example.myapplication
 import android.Manifest
 import android.animation.ValueAnimator
 import android.content.Intent
-import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -11,13 +10,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.PathInterpolator
 import android.widget.Button
-import android.widget.EditText
 import android.widget.TextView
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.edit
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.slider.Slider
 import kotlin.math.roundToInt
@@ -25,7 +22,6 @@ import kotlin.math.roundToInt
 class MainActivity : AppCompatActivity() {
 
     // Vistas de activity_main.xml
-    private lateinit var etIp: EditText
     private lateinit var btnConectar: Button
     private lateinit var btnDemo: Button
     private lateinit var tvConexion: TextView
@@ -42,7 +38,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cardSimulacion: View
     private lateinit var slSimulacion: Slider
 
-    private lateinit var prefs: SharedPreferences
     private lateinit var fondo: FondoAnimado
 
     private var actualizandoPantalla = false    // evita que el switch reenvíe órdenes
@@ -76,7 +71,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         fondo = FondoAnimado(findViewById(R.id.main))
 
-        etIp = findViewById(R.id.etIp)
         btnConectar = findViewById(R.id.btnConectar)
         btnDemo = findViewById(R.id.btnDemo)
         tvConexion = findViewById(R.id.tvConexion)
@@ -93,21 +87,14 @@ class MainActivity : AppCompatActivity() {
         cardSimulacion = findViewById(R.id.cardSimulacion)
         slSimulacion = findViewById(R.id.slSimulacion)
 
-        // Conexión automática con la última IP guardada.
-        prefs = getSharedPreferences("clima", MODE_PRIVATE)
-        val ipGuardada = prefs.getString("ip", "") ?: ""
-        etIp.setText(if (Placa.ip.isNotBlank() && !Placa.enModoDemo) Placa.ip else ipGuardada)
-        if (Placa.ip.isBlank() && ipGuardada.isNotBlank()) Placa.conectar(ipGuardada)
+        // Conexión automática con la placa al abrir la app.
+        if (Placa.ip.isBlank()) Placa.conectar(IP_PLACA)
 
         // --- Conexión ---
-        btnConectar.setOnClickListener {
-            val ip = etIp.text.toString().trim()
-            prefs.edit { putString("ip", ip) }
-            Placa.conectar(ip)
-        }
-        // Activa o desactiva el modo demo.
+        btnConectar.setOnClickListener { Placa.conectar(IP_PLACA) }
+        // Activa el modo demo, o vuelve a la placa al salir de él.
         btnDemo.setOnClickListener {
-            Placa.conectar(if (Placa.enModoDemo) "" else IP_DEMO)
+            Placa.conectar(if (Placa.enModoDemo) IP_PLACA else IP_DEMO)
         }
 
         // --- Ventilador (control manual) ---
@@ -175,7 +162,7 @@ class MainActivity : AppCompatActivity() {
             mostrarSinDatos()
             if (Placa.hayError) {
                 tvDetalle.setText(R.string.detalle_sin_conexion)
-                tvError.text = getString(R.string.error_conexion, Placa.ip)
+                tvError.text = getString(R.string.error_conexion, RED_PLACA)
                 tvError.visibility = View.VISIBLE
             } else {
                 tvError.visibility = View.GONE
@@ -222,11 +209,11 @@ class MainActivity : AppCompatActivity() {
 
     /** Texto del estado de la conexión. */
     private fun textoConexion(): String = when {
-        Placa.ip.isBlank() -> getString(R.string.conexion_escribe_ip)
+        Placa.ip.isBlank() -> getString(R.string.conexion_inicio, RED_PLACA)
         Placa.enModoDemo -> getString(R.string.conexion_demo)
         Placa.hayError -> getString(R.string.conexion_sin)
-        Placa.estado == null -> getString(R.string.conexion_conectando, Placa.ip)
-        else -> getString(R.string.conexion_conectado, Placa.ip)
+        Placa.estado == null -> getString(R.string.conexion_conectando)
+        else -> getString(R.string.conexion_conectado)
     }
 
     /** Texto de la posición de la temperatura respecto a la zona de confort. */

@@ -24,6 +24,10 @@ const val MUESTRAS_HISTORIAL = 150
 /** Valor de IP que activa el modo demo. */
 const val IP_DEMO = "demo"
 
+/** Red WiFi que crea la placa e IP fija de la placa en esa red (iguales al sketch). */
+const val RED_PLACA = "ControlClima"
+const val IP_PLACA = "192.168.4.1"
+
 /** Estado que entrega la placa en formato JSON. */
 data class Estado(
     val temperatura: Double?,   // °C; null si el sensor no entregó lectura
