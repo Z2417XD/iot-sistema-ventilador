@@ -41,15 +41,14 @@ La placa funciona como un pequeño servidor web en el puerto 80. La app le pide 
 
 | Ruta | Qué hace |
 |---|---|
-| `/estado` | Devuelve temperatura, humedad, estado del ventilador, modo automático, objetivo y alerta. |
+| `/estado` | Devuelve temperatura, humedad, estado del ventilador, objetivo y alerta. |
 | `/objetivo?valor=24.0` | Cambia la temperatura objetivo (entre 10 y 40 °C). |
-| `/auto?on=1` o `on=0` | Activa o desactiva el modo automático. |
-| `/ventilador?on=1` o `on=0` | Prende o apaga el ventilador a mano. Esto desactiva el modo automático. |
+| `/ventilador?on=1` o `on=0` | Prende o apaga el ventilador a mano. |
 
 Un ejemplo de respuesta:
 
 ```json
-{"temperatura":23.0,"humedad":55,"ventilador":false,"auto":true,"objetivo":24.0,"alerta":"ninguna"}
+{"temperatura":23.0,"humedad":55,"ventilador":false,"objetivo":24.0,"alerta":"ninguna"}
 ```
 
 La app pregunta por `/estado` cada 2 segundos. Si la placa no contesta en 3 segundos, muestra que se perdió la conexión y sigue intentando. Por el lado de la placa, cada 10 segundos revisa si sigue conectada al WiFi y, si se cayó, se reconecta sola.
@@ -64,7 +63,7 @@ Como el hotspot reparte las IP automáticamente, **la IP puede cambiar** cada ve
 
 Al abrir la app aparece primero el login. Después de entrar hay dos pantallas.
 
-La pantalla principal tiene el campo para escribir la IP, el termómetro, la humedad, los botones y el deslizador para cambiar la temperatura objetivo, y los interruptores del ventilador y del modo automático. El fondo cambia de color según qué tan fría o caliente esté la pieza.
+La pantalla principal tiene el campo para escribir la IP, el termómetro, la humedad, los botones y el deslizador para cambiar la temperatura objetivo, y el interruptor del ventilador, que se maneja solo a mano. El fondo cambia de color según qué tan fría o caliente esté la pieza.
 
 La pantalla de historial muestra los parámetros en tiempo real, un gráfico con los últimos 5 minutos de temperatura y unas métricas calculadas con esos datos (mínima, máxima, promedio y el porcentaje de tiempo dentro de la zona de confort). Desde ahí se pueden guardar las métricas en la nube.
 
@@ -103,7 +102,6 @@ Firestore no trabaja con tablas sino con colecciones de documentos. Acá hay una
 | `objetivo` | decimal | Temperatura objetivo al momento de guardar. |
 | `humedad` | decimal | Humedad al momento de guardar (%). |
 | `ventilador` | booleano | Si el ventilador estaba encendido. |
-| `modo_auto` | booleano | Si el modo automático estaba activado. |
 
 Las reglas de Firestore piden un usuario autenticado para escribir. Por eso, justo después de validar el login, la app abre una sesión anónima de Firebase.
 

@@ -18,11 +18,10 @@
 //
 //     /estado                  consulta del estado
 //     /objetivo?valor=24.0     temperatura objetivo (10 a 40 °C)
-//     /auto?on=1  | on=0       modo automático activado / desactivado
-//     /ventilador?on=1 | on=0  ventilador encendido / apagado (modo manual)
+//     /ventilador?on=1 | on=0  ventilador encendido / apagado (solo manual)
 //
 //   Respuesta:
-//     {"temperatura":23.0,"humedad":55,"ventilador":false,"auto":true,
+//     {"temperatura":23.0,"humedad":55,"ventilador":false,
 //      "objetivo":24.0,"alerta":"ninguna"}
 //
 //   Prueba desde el navegador: http://IP_DE_LA_PLACA/estado
@@ -64,7 +63,6 @@ ArduinoLEDMatrix matriz;
 float temperatura = NAN;
 float humedad     = NAN;
 float objetivo    = 24.0;
-bool  modoAuto    = true;
 bool  ventilador  = false;
 
 unsigned long ultimaLectura = 0;
@@ -101,7 +99,6 @@ void setup() {
 void loop() {
   revisarWifi();
   leerSensor();
-  controlAutomatico();
   moverServo();
   atenderCliente();
 }
@@ -170,13 +167,6 @@ void leerSensor() {
 
 // ---------------------------- Ventilador ---------------------------------
 
-// Modo automático: ventilador según el objetivo, con histéresis de 0,5 °C
-void controlAutomatico() {
-  if (!modoAuto || isnan(temperatura)) return;
-  if (temperatura >= objetivo + 0.5) ventilador = true;
-  if (temperatura <= objetivo - 0.5) ventilador = false;
-}
-
 // Movimiento del servo de lado a lado mientras el ventilador está encendido (sin delay)
 void moverServo() {
   if (!ventilador) return;
@@ -200,7 +190,7 @@ const char* alerta() {
 
 // ------------------------------ Servidor ---------------------------------
 
-// Devuelve el valor de un parámetro: valorDe("/auto?on=1", "on=") -> "1"
+// Devuelve el valor de un parámetro: valorDe("/ventilador?on=1", "on=") -> "1"
 String valorDe(const String& ruta, const char* clave) {
   int inicio = ruta.indexOf(clave);
   if (inicio < 0) return "";
@@ -217,8 +207,6 @@ void responderEstado(WiFiClient& cliente) {
   json += isnan(humedad) ? String("null") : String(humedad, 0);
   json += ",\"ventilador\":";
   json += ventilador ? "true" : "false";
-  json += ",\"auto\":";
-  json += modoAuto ? "true" : "false";
   json += ",\"objetivo\":";
   json += String(objetivo, 1);
   json += ",\"alerta\":\"";
@@ -256,12 +244,8 @@ void atenderCliente() {
     if (valor.length() > 0) {
       objetivo = constrain(valor.toFloat(), OBJETIVO_MIN, OBJETIVO_MAX);
     }
-  } else if (ruta.startsWith("/auto")) {
-    modoAuto = valorDe(ruta, "on=") == "1";
-    controlAutomatico();
   } else if (ruta.startsWith("/ventilador")) {
     ventilador = valorDe(ruta, "on=") == "1";
-    modoAuto = false;                              // orden manual
   } else if (!ruta.startsWith("/estado")) {
     conocida = false;
   }

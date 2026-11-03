@@ -40,7 +40,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvObjetivo: TextView
     private lateinit var btnSubir: Button
     private lateinit var slObjetivo: Slider
-    private lateinit var swAuto: MaterialSwitch
     private lateinit var swVentilador: MaterialSwitch
     private lateinit var tvVentiladorEstado: TextView
     private lateinit var ventiladorIcono: VentiladorView
@@ -95,7 +94,6 @@ class MainActivity : AppCompatActivity() {
         tvObjetivo = findViewById(R.id.tvObjetivo)
         btnSubir = findViewById(R.id.btnSubir)
         slObjetivo = findViewById(R.id.slObjetivo)
-        swAuto = findViewById(R.id.swAuto)
         swVentilador = findViewById(R.id.swVentilador)
         tvVentiladorEstado = findViewById(R.id.tvVentiladorEstado)
         ventiladorIcono = findViewById(R.id.ventiladorIcono)
@@ -134,10 +132,7 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        // --- Ventilador (el control manual desactiva el modo automático en la placa) ---
-        swAuto.setOnCheckedChangeListener { _, activo ->
-            if (!actualizandoPantalla) Placa.enviarOrden("/auto?on=${if (activo) 1 else 0}")
-        }
+        // --- Ventilador (solo manual) ---
         swVentilador.setOnCheckedChangeListener { _, activo ->
             if (!actualizandoPantalla) Placa.enviarOrden("/ventilador?on=${if (activo) 1 else 0}")
         }
@@ -227,7 +222,6 @@ class MainActivity : AppCompatActivity() {
         if (controlesAlDia) {
             // La bandera evita que el listener reenvíe la orden.
             actualizandoPantalla = true
-            swAuto.isChecked = estado.auto
             swVentilador.isChecked = estado.ventilador
             actualizandoPantalla = false
         }
@@ -304,7 +298,6 @@ class MainActivity : AppCompatActivity() {
         btnBajar.isEnabled = conectado && objetivo != null && objetivo > OBJETIVO_MIN
         btnSubir.isEnabled = conectado && objetivo != null && objetivo < OBJETIVO_MAX
         slObjetivo.isEnabled = conectado
-        swAuto.isEnabled = conectado
         swVentilador.isEnabled = conectado
     }
 

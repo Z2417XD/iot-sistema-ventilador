@@ -186,7 +186,6 @@ object Placa {
                 temperatura = if (json.isNull("temperatura")) null else json.getDouble("temperatura"),
                 humedad = if (json.isNull("humedad")) null else json.getDouble("humedad"),
                 ventilador = json.getBoolean("ventilador"),
-                auto = json.getBoolean("auto"),
                 objetivo = json.getDouble("objetivo"),
                 alerta = json.optString("alerta", "ninguna")
             )

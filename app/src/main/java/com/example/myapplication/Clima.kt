@@ -32,7 +32,6 @@ data class Estado(
     val temperatura: Double?,   // °C; null si el sensor no entregó lectura
     val humedad: Double?,
     val ventilador: Boolean,    // true = ventilador encendido
-    val auto: Boolean,          // true = control automático según el objetivo
     val objetivo: Double,       // temperatura deseada en °C
     val alerta: String          // "alta", "baja" o "ninguna"
 )

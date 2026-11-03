@@ -80,7 +80,6 @@ class HistorialActivity : AppCompatActivity() {
                     if (estado.ventilador) R.string.ventilador_encendido
                     else R.string.ventilador_apagado
                 ),
-                getString(if (estado.auto) R.string.activado else R.string.desactivado),
                 getString(textoZona(Placa.zona))
             )
         }
