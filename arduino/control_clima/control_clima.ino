@@ -62,6 +62,7 @@ float humedad     = NAN;
 bool  ventilador  = false;
 
 unsigned long ultimaLectura = 0;
+unsigned long ultimaLecturaValida = 0;
 unsigned long ultimoPaso    = 0;
 int angulo = 90;
 int paso   = 3;
@@ -139,9 +140,21 @@ void leerSensor() {
   float h = dht.readHumidity();
   if (isnan(t) || isnan(h)) {
     Serial.println("No se pudo leer el DHT11 (revisa el cable de DATA en D2).");
+    // Conserva la última lectura válida; sin lecturas válidas por 10 s se informa "sin lectura"
+    if (millis() - ultimaLecturaValida > 10000) {
+      temperatura = NAN;
+      humedad = NAN;
+    }
+  } else {
+    temperatura = t;
+    humedad = h;
+    ultimaLecturaValida = millis();
+    Serial.print("Temperatura: ");
+    Serial.print(t, 1);
+    Serial.print(" C  Humedad: ");
+    Serial.print(h, 0);
+    Serial.println(" %");
   }
-  temperatura = t;                 // NAN si la lectura falló
-  humedad = h;
 
   mostrarTemperaturaEnMatriz();
 }
