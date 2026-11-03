@@ -13,6 +13,8 @@
 //   - Servo, WiFiS3 y Arduino_LED_Matrix ya vienen con la placa UNO R4.
 //
 // COMUNICACIÓN CON LA APP
+//   La placa crea su propia red WiFi ("ControlClima", clave "clima1234") con la
+//   IP fija 192.168.4.1. El celular se conecta a esa red y la app envía las órdenes.
 //   Servidor HTTP en el puerto 80. Rutas (todas responden el estado en JSON):
 //
 //     /estado                  consulta del estado
@@ -21,10 +23,10 @@
 //   Respuesta:
 //     {"temperatura":23.0,"humedad":55,"ventilador":false,"alerta":"ninguna"}
 //
-//   Prueba desde el navegador: http://IP_DE_LA_PLACA/estado
+//   Prueba desde el navegador: http://192.168.4.1/estado
 // ===========================================================================
 
-#define USAR_MATRIZ 1          // 1 = IP y temperatura en la matriz de LEDs
+#define USAR_MATRIZ 1          // 1 = red, IP y temperatura en la matriz de LEDs
 
 #include <WiFiS3.h>
 #include <DHT.h>
@@ -35,9 +37,10 @@
 #endif
 
 // ----------------------------- Configuración -----------------------------
-// Red WiFi (2,4 GHz, WPA2)
-const char WIFI_NOMBRE[] = "TU_WIFI";
-const char WIFI_CLAVE[]  = "TU_CLAVE";
+// Red WiFi propia de la placa (punto de acceso). La clave necesita al menos 8 caracteres.
+const char RED_NOMBRE[] = "ControlClima";
+const char RED_CLAVE[]  = "clima1234";
+const IPAddress IP_PLACA(192, 168, 4, 1);   // IP fija que se escribe en la app
 
 const int PIN_DHT   = 2;
 const int PIN_SERVO = 9;
@@ -60,7 +63,6 @@ bool  ventilador  = false;
 
 unsigned long ultimaLectura = 0;
 unsigned long ultimoPaso    = 0;
-unsigned long ultimaRevisionWifi = 0;
 int angulo = 90;
 int paso   = 3;
 int temperaturaEnMatriz = -1000;   // último valor mostrado en la matriz
@@ -85,12 +87,11 @@ void setup() {
     Serial.println("Aviso: conviene actualizar el firmware WiFi de la placa.");
   }
 
-  conectarWifi();
+  crearRed();
   servidor.begin();
 }
 
 void loop() {
-  revisarWifi();
   leerSensor();
   moverServo();
   atenderCliente();
@@ -98,46 +99,33 @@ void loop() {
 
 // ------------------------------- WiFi ------------------------------------
 
-// Conexión a la red WiFi
-void conectarWifi() {
-  Serial.print("Conectando a ");
-  Serial.println(WIFI_NOMBRE);
+// Creación de la red WiFi de la placa; el celular se conecta directo a ella
+void crearRed() {
+  Serial.print("Creando la red ");
+  Serial.println(RED_NOMBRE);
   mostrarTextoFijo("..");
 
-  while (WiFi.begin(WIFI_NOMBRE, WIFI_CLAVE) != WL_CONNECTED) {
-    Serial.print(".");
+  WiFi.config(IP_PLACA);
+  while (WiFi.beginAP(RED_NOMBRE, RED_CLAVE) != WL_AP_LISTENING) {
+    Serial.println("No se pudo crear la red, reintentando...");
     delay(3000);
   }
-  // Espera la asignación de la IP
-  while (WiFi.localIP() == IPAddress(0, 0, 0, 0)) {
-    delay(200);
-  }
 
-  IPAddress ip = WiFi.localIP();
-  Serial.println();
-  Serial.print("Listo. Escribe esta IP en la app: ");
-  Serial.println(ip);
+  Serial.print("Listo. Conecta el celular a la red ");
+  Serial.print(RED_NOMBRE);
+  Serial.print(" (clave ");
+  Serial.print(RED_CLAVE);
+  Serial.println(")");
+  Serial.print("IP para la app: ");
+  Serial.println(IP_PLACA);
   Serial.print("Prueba en el navegador del celular: http://");
-  Serial.print(ip);
+  Serial.print(IP_PLACA);
   Serial.println("/estado");
 
-  // IP desplazada dos veces en la matriz de LEDs
-  String texto = "   IP " + ip.toString() + "   ";
-  desplazarTexto(texto);
+  // Nombre de la red e IP desplazados en la matriz de LEDs
+  String texto = String("   ") + RED_NOMBRE + "  IP " + IP_PLACA.toString() + "   ";
   desplazarTexto(texto);
   temperaturaEnMatriz = -1000;     // redibujo de la temperatura
-}
-
-// Reconexión automática al WiFi (revisión cada 10 s)
-void revisarWifi() {
-  if (millis() - ultimaRevisionWifi < 10000) return;
-  ultimaRevisionWifi = millis();
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("Se perdió el WiFi, reconectando...");
-    WiFi.disconnect();
-    conectarWifi();
-    servidor.begin();
-  }
 }
 
 // ------------------------------- Sensor ----------------------------------
